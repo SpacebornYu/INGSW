@@ -1,3 +1,9 @@
+docs/
+out/
+LICENSE
+*.md 
+*.puml   
+
 # Dependencies
 node_modules/
 backend/node_modules/

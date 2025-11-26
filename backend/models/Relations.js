@@ -4,7 +4,6 @@ import Issue from './Issue.js';
 import Comment from './Comment.js';
 import Tag from './Tag.js';
 import IssueTag from './IssueTag.js';
-import IssueAssignee from './IssueAssignee.js';
 
 // Relazioni User <-> Issue (creator)
 User.hasMany(Issue, { as: 'createdIssues', foreignKey: 'creatorId' });
@@ -29,18 +28,6 @@ Tag.belongsToMany(Issue, {
   foreignKey: 'tagId',
 });
 
-// Assegnatari (N-N, max 3 gestito nel codice)
-Issue.belongsToMany(User, {
-  through: IssueAssignee,
-  as: 'assignees',
-  foreignKey: 'issueId',
-});
-User.belongsToMany(Issue, {
-  through: IssueAssignee,
-  as: 'assignedIssues',
-  foreignKey: 'userId',
-});
-
 export default {
   database,
   User,
@@ -48,5 +35,4 @@ export default {
   Comment,
   Tag,
   IssueTag,
-  IssueAssignee,
 };

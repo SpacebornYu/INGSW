@@ -84,7 +84,6 @@ export async function getIssues(req, res) {
     const include = [
       { model: User, as: 'creator', attributes: ['id', 'email'] },
       { model: Tag, as: 'tags', attributes: ['id', 'name'], through: { attributes: [] } },
-      { model: User, as: 'assignees', attributes: ['id', 'email'], through: { attributes: [] } },
     ];
 
     // Filtro per tag (più complesso)
@@ -114,7 +113,6 @@ export async function getIssueById(req, res) {
     const issue = await Issue.findByPk(id, {
       include: [
         { model: User, as: 'creator', attributes: ['id', 'email'] },
-        { model: User, as: 'assignees', attributes: ['id', 'email'], through: { attributes: [] } },
         { model: Tag, as: 'tags', attributes: ['id', 'name'], through: { attributes: [] } },
         { 
           model: Comment, 
@@ -186,7 +184,6 @@ export async function updateIssue(req, res) {
     const updated = await Issue.findByPk(id, {
       include: [
         { model: User, as: 'creator', attributes: ['id', 'email'] },
-        { model: User, as: 'assignees', attributes: ['id', 'email'], through: { attributes: [] } },
         { model: Tag, as: 'tags', attributes: ['id', 'name'], through: { attributes: [] } },
       ],
     });
@@ -194,55 +191,6 @@ export async function updateIssue(req, res) {
     res.json(updated);
   } catch (error) {
     console.error('Errore nell\'aggiornamento issue:', error);
-    res.status(500).json({ error: 'Errore del server' });
-  }
-}
-
-// PATCH /issues/:id/assignees - assegna utenti (max 3, solo admin)
-export async function updateAssignees(req, res) {
-  try {
-    const { id } = req.params;
-    const { assigneeIds } = req.body;
-
-    if (!Array.isArray(assigneeIds)) {
-      return res.status(400).json({ error: 'assigneeIds deve essere un array' });
-    }
-
-    if (assigneeIds.length > 3) {
-      return res.status(400).json({ 
-        error: 'Una issue può essere assegnata a massimo 3 utenti' 
-      });
-    }
-
-    const issue = await Issue.findByPk(id);
-    
-    if (!issue) {
-      return res.status(404).json({ error: 'Issue non trovata' });
-    }
-
-    // Verifica che tutti gli utenti esistano
-    if (assigneeIds.length > 0) {
-      const users = await User.findAll({
-        where: { id: assigneeIds },
-      });
-
-      if (users.length !== assigneeIds.length) {
-        return res.status(400).json({ error: 'Uno o più utenti non esistono' });
-      }
-    }
-
-    await issue.setAssignees(assigneeIds);
-
-    // Ricarica con assegnatari
-    const updated = await Issue.findByPk(id, {
-      include: [
-        { model: User, as: 'assignees', attributes: ['id', 'email'], through: { attributes: [] } },
-      ],
-    });
-
-    res.json(updated);
-  } catch (error) {
-    console.error('Errore nell\'aggiornamento assegnatari:', error);
     res.status(500).json({ error: 'Errore del server' });
   }
 }

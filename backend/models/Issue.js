@@ -32,6 +32,15 @@ const Issue = database.define('Issue', {
     type: DataTypes.TEXT,
     allowNull: true, // URL Cloudinary
   },
+  creatorId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
+  },
 }, {
   tableName: 'Issues',
   timestamps: true,
