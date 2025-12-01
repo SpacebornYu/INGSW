@@ -12,11 +12,7 @@ import commentRoutes from "./routes/commentRoutes.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({
-  origin: 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  credentials: true
-}));
+app.use(cors());
 
 app.use(express.json());
 
