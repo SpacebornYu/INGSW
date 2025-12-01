@@ -20,7 +20,7 @@ const Issue = database.define('Issue', {
     allowNull: false,
   },
   priority: {
-    type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH', 'URGENT'),
+    type: DataTypes.ENUM('VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'),
     allowNull: true,
   },
   status: {

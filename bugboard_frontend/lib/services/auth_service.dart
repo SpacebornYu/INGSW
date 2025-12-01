@@ -3,47 +3,79 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  // URL del backend:
-  // Usa 'http://10.0.2.2:3000' se usi l'Emulatore Android
-  // Usa 'http://localhost:3000' se usi il simulatore iOS
-  // Usa il tuo IP locale (es. 192.168.1.X) se usi un telefono fisico
-  static const String baseUrl = 'http://LocalHost:3000';
+  // Usa localhost per Chrome e iOS Simulator
+  // Usa 10.0.2.2 per Android Emulator
+  static const String baseUrl = 'http://localhost:3000'; 
 
+  // --- LOGIN ---
   Future<bool> login(String email, String password) async {
-    final url = Uri.parse('$baseUrl/auth/login');
-
+    final url = Uri.parse('$baseUrl/auth/login'); 
     try {
-      print("Provo a connettermi a: $url");
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
-      print("Status Code: ${response.statusCode}");
-      print("Body: ${response.body}");
-
       if (response.statusCode == 200) {
-        // Login riuscito: il backend restituisce il token
         final data = jsonDecode(response.body);
-        String token = data['token'];
-        // Salviamo il token nella memoria del telefono
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
+        
+        await prefs.setString('token', data['token']);
+        // Salviamo info utili
+        await prefs.setString('email', data['user']['email']);
+        await prefs.setString('role', data['user']['role']); 
+        
         return true;
-      } else {
-        // Login fallito (es. 401 Credenziali non valide)
-        return false;
       }
+      print("Login fallito: ${response.body}");
+      return false;
     } catch (e) {
-      print("Errore di connessione: $e");
+      print("Errore eccezione login: $e");
       return false;
     }
   }
 
+  // --- REGISTRAZIONE NUOVO UTENTE (Solo Admin) ---
+  // Ritorna null se successo, oppure una Stringa con l'errore se fallisce
+  Future<String?> registerUser(String email, String password, String role) async {
+    // CORREZIONE URL: somma di '/users' (index.js) + '/admin/users' (userRoutes.js)
+    final url = Uri.parse('$baseUrl/users/admin/users'); 
+    
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'role': role, // "ADMIN" o "USER"
+        }),
+      );
+      
+      if (response.statusCode == 201) {
+        return null; // NULL significa SUCCESSO
+      } else {
+        // Proviamo a leggere il messaggio di errore dal backend
+        try {
+          final body = jsonDecode(response.body);
+          return body['error'] ?? "Errore server (${response.statusCode})";
+        } catch (_) {
+          return "Errore server (${response.statusCode})";
+        }
+      }
+    } catch (e) {
+      return "Errore di connessione: $e";
+    }
+  }
+
+  // --- LOGOUT ---
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
