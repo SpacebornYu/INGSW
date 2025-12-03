@@ -3,7 +3,7 @@ import '../models/issue.dart';
 import '../services/issue_service.dart';
 import 'create_issue_screen.dart';
 import 'account_screen.dart';
-import 'issue_detail_screen.dart'; // Fondamentale per i dettagli
+import 'issue_detail_screen.dart'; 
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,20 +15,17 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final IssueService _issueService = IssueService();
   
-  // Dati
   List<Issue> _allIssues = [];      
   List<Issue> _filteredIssues = []; 
   bool _isLoading = true;
   String _errorMessage = "";
 
-  // Stato Filtri (Set per selezione multipla)
   String _searchQuery = "";
   Set<String> _selectedTypes = {};     
   Set<String> _selectedStatuses = {};   
   Set<String> _selectedPriorities = {}; 
   Set<String> _selectedLabels = {};    
 
-  // Navigazione
   int _selectedIndex = 0;
   final GlobalKey<CreateIssueScreenState> _createIssueKey = GlobalKey();
 
@@ -55,32 +52,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // --- MOTORE DI FILTRAGGIO ---
   void _applyFilters() {
     setState(() {
       _filteredIssues = _allIssues.where((issue) {
-        // 1. Ricerca testo
         if (_searchQuery.isNotEmpty) {
           final q = _searchQuery.toLowerCase();
           if (!issue.title.toLowerCase().contains(q) && 
               !issue.description.toLowerCase().contains(q)) return false;
         }
         
-        // 2. Filtri Multipli (Logica OR dentro il gruppo, AND tra gruppi)
         if (_selectedTypes.isNotEmpty && !_selectedTypes.contains(issue.type)) return false;
         if (_selectedStatuses.isNotEmpty && !_selectedStatuses.contains(issue.status)) return false;
         
-        // 3. Priorità (Normalizziamo perché backend può mandare con _ o spazio)
         if (_selectedPriorities.isNotEmpty) {
-          // Normalizziamo la priorità della issue per il confronto
           String normPriority = issue.priority?.toUpperCase().replaceAll(' ', '_') ?? "";
-          // Normalizziamo anche i filtri selezionati
           Set<String> normFilters = _selectedPriorities.map((p) => p.toUpperCase().replaceAll(' ', '_')).toSet();
-          
           if (!normFilters.contains(normPriority)) return false;
         }
         
-        // 4. Etichette
         if (_selectedLabels.isNotEmpty) {
           bool hasMatch = issue.tags.any((tag) => _selectedLabels.contains(tag));
           if (!hasMatch) return false;
@@ -91,7 +80,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  // --- UI HELPER: Bottoni Filtro ---
   Widget _buildFilterChip(String label, Set<String> selectedValues, Function(Set<String>) onUpdate) {
     bool isActive = selectedValues.isNotEmpty;
     String buttonText = label;
@@ -106,7 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return GestureDetector(
       onTap: () {
         if (isActive) {
-          onUpdate({}); // Reset rapido al click se attivo
+          onUpdate({}); 
         }
       },
       child: Container(
@@ -139,7 +127,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _formatLabel(String txt) {
-    // Rende leggibile (VERY_HIGH -> Very High)
     return txt.replaceAll('_', ' ').toLowerCase().split(' ').map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '').join(' ');
   }
 
@@ -199,10 +186,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // --- NAVIGAZIONE ---
   void _onItemTapped(int index) async {
     if (_selectedIndex == 1 && index != 1) {
-      // Se sto uscendo dalla schermata "Crea", chiedo conferma se ci sono modifiche
       bool hasUnsavedData = _createIssueKey.currentState?.hasChanges ?? false;
       if (hasUnsavedData) {
         bool shouldLeave = await showDialog(
@@ -222,7 +207,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
     setState(() => _selectedIndex = index);
-    if (index == 0) _loadIssues(); // Ricarica lista se torno alla home
+    if (index == 0) _loadIssues(); 
   }
 
   @override
@@ -233,9 +218,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: IndexedStack(
           index: _selectedIndex,
           children: [
-            _buildDashboardContent(), // 0
-            CreateIssueScreen(key: _createIssueKey, onSuccess: () { _onItemTapped(0); _loadIssues(); }), // 1
-            const AccountScreen(), // 2
+            _buildDashboardContent(), 
+            CreateIssueScreen(key: _createIssueKey, onSuccess: () { _onItemTapped(0); _loadIssues(); }), 
+            const AccountScreen(), 
           ],
         ),
       ),
@@ -255,14 +240,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboardContent() {
-    final Set<String> existingTags = _allIssues.expand((i) => i.tags).toSet();
+    // FIX: Filtriamo le etichette vuote per non mostrarle nel menu!
+    final Set<String> existingTags = _allIssues
+        .expand((i) => i.tags)
+        .where((t) => t.trim().isNotEmpty) // <--- QUESTO RIMUOVE QUELLE VUOTE
+        .toSet();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Barra Ricerca
           TextField(
             style: const TextStyle(color: Colors.white),
             onChanged: (val) { _searchQuery = val; _applyFilters(); },
@@ -276,7 +264,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Filtri Orizzontali
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -307,7 +294,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           
           const SizedBox(height: 24),
 
-          // Lista o Loading
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else if (_errorMessage.isNotEmpty)
@@ -329,14 +315,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               decoration: BoxDecoration(color: const Color(0xFF1C1C1E), borderRadius: BorderRadius.circular(16)),
               child: ListView.separated(
-                shrinkWrap: true, // Adatta l'altezza al contenuto
-                physics: const NeverScrollableScrollPhysics(), // Scrolla con la pagina principale
+                shrinkWrap: true, 
+                physics: const NeverScrollableScrollPhysics(), 
                 itemCount: _filteredIssues.length,
                 separatorBuilder: (_, __) => const Divider(color: Colors.grey, height: 1, indent: 60),
                 itemBuilder: (context, index) {
                   final issue = _filteredIssues[index];
                   return ListTile(
-                    // --- ECCO LA RIGA MANCANTE AGGIUNTA ---
                     onTap: () async {
                       await Navigator.push(
                         context,
@@ -344,10 +329,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           builder: (_) => IssueDetailScreen(issueId: issue.id),
                         ),
                       );
-                      // Al ritorno aggiorniamo la lista
-                      _loadIssues();
+                      _loadIssues(); 
                     },
-                    // ------------------------------------
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     leading: _getIconForType(issue.type),
                     title: Text(issue.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
@@ -370,7 +353,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // --- HELPERS GRAFICI ---
   Widget _buildStatusBadge(String status) {
     Color color = Colors.grey;
     String text = status.replaceAll('_', ' ');
@@ -401,17 +383,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _getPriorityIcon(String? priority) {
     if (priority == null) return const SizedBox();
-    
-    // Normalizza la stringa per sicurezza
-    String p = priority.toUpperCase().replaceAll('_', ' '); 
-    
-    if (p.contains('VERY HIGH')) return const Icon(Icons.keyboard_double_arrow_up, color: Colors.red, size: 18);
-    if (p.contains('HIGH')) return const Icon(Icons.keyboard_arrow_up, color: Colors.redAccent, size: 18);
-    if (p.contains('MEDIUM')) return const Icon(Icons.drag_handle, color: Colors.orange, size: 18);
-    if (p.contains('VERY LOW')) return const Icon(Icons.keyboard_double_arrow_down, color: Colors.blue, size: 18);
-    // LOW fallback
-    if (p.contains('LOW')) return const Icon(Icons.keyboard_arrow_down, color: Colors.blueAccent, size: 18);
-    
+    String p = priority.toUpperCase().replaceAll(' ', '_'); 
+    if (p == 'VERY_HIGH') return const Icon(Icons.keyboard_double_arrow_up, color: Colors.red, size: 18);
+    if (p == 'HIGH') return const Icon(Icons.keyboard_arrow_up, color: Colors.redAccent, size: 18);
+    if (p == 'MEDIUM') return const Icon(Icons.drag_handle, color: Colors.orange, size: 18);
+    if (p == 'VERY_LOW') return const Icon(Icons.keyboard_double_arrow_down, color: Colors.blue, size: 18);
+    if (p == 'LOW') return const Icon(Icons.keyboard_arrow_down, color: Colors.blueAccent, size: 18);
     return const Icon(Icons.help_outline, color: Colors.grey, size: 18);
   }
 }

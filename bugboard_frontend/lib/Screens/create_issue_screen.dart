@@ -97,7 +97,7 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
 
     setState(() => _isLoading = true);
     
-    // MODIFICA: Creiamo la lista di stringhe per tutte le immagini
+    // FIX: Convertiamo la lista di XFile in una lista di Stringhe (path)
     List<String> imagePathsToSend = _selectedImages.map((img) => img.path).toList();
 
     bool success = await _issueService.createIssue(
@@ -106,7 +106,7 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
       _selectedType!, 
       _selectedPriority!, 
       _labelController.text,
-      imagePathsToSend // Passiamo la lista intera!
+      imagePathsToSend // ORA PASSIAMO LA LISTA!
     );
     
     setState(() => _isLoading = false);
@@ -186,7 +186,6 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                   const SizedBox(height: 16),
                   _input("Descrizione", _descController, lines: 4),
                   const SizedBox(height: 24),
-                  
                   Row(
                     children: [
                       Expanded(child: _bigBtn(_selectedType ?? "Tipo", _selectedType != null, () => _showSheet("Tipo", _types, (v) => setState(() => _selectedType = v)))),

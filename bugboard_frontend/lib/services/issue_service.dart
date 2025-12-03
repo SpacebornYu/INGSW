@@ -4,9 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/issue.dart';
 
 class IssueService {
+  // Usa localhost per Chrome/iOS, 10.0.2.2 per Android
   static const String baseUrl = 'http://localhost:3000'; 
 
-  // GET LISTA
+  // --- GET LISTA ---
   Future<List<Issue>> getIssues() async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
@@ -28,7 +29,7 @@ class IssueService {
     }
   }
 
-  // GET DETTAGLIO
+  // --- GET DETTAGLIO ---
   Future<Issue?> getIssueDetails(int id) async {
     final url = Uri.parse('$baseUrl/issues/$id');
     final prefs = await SharedPreferences.getInstance();
@@ -48,7 +49,7 @@ class IssueService {
     }
   }
 
-  // POST COMMENTO
+  // --- POST COMMENTO ---
   Future<bool> postComment(int issueId, String content) async {
     final url = Uri.parse('$baseUrl/issues/$issueId/comments');
     final prefs = await SharedPreferences.getInstance();
@@ -66,7 +67,7 @@ class IssueService {
     }
   }
 
-  // DELETE COMMENTO
+  // --- DELETE COMMENTO ---
   Future<bool> deleteComment(int commentId) async {
     final url = Uri.parse('$baseUrl/comments/$commentId');
     final prefs = await SharedPreferences.getInstance();
@@ -83,19 +84,20 @@ class IssueService {
     }
   }
 
-  // CREA ISSUE (FIXED: Accetta LISTA di immagini)
+  // --- CREA ISSUE (AGGIORNATO PER LISTA IMMAGINI) ---
   Future<bool> createIssue(String title, String description, String type, String priority, String label, List<String> imagePaths) async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
+    // Mappatura Priorità sicura
     String formattedPriority = priority;
     if (priority == 'Very High') formattedPriority = 'VERY HIGH';
     else if (priority == 'High') formattedPriority = 'HIGH';
     else if (priority == 'Medium') formattedPriority = 'MEDIUM';
     else if (priority == 'Low') formattedPriority = 'LOW';
     else if (priority == 'Very Low') formattedPriority = 'VERY LOW';
-
+    
     Map<String, dynamic> bodyMap = {
       'title': title,
       'description': description,
@@ -103,11 +105,10 @@ class IssueService {
       'priority': formattedPriority,
       'tags': [label],
     };
-
-    // TRUCCO: Se ci sono immagini, trasformiamo la LISTA in una STRINGA JSON
-    // Esempio: ["path1", "path2"] diventa '["path1", "path2"]'
+    
+    // TRUCCO: Convertiamo la lista di percorsi in una stringa JSON
     if (imagePaths.isNotEmpty) {
-      bodyMap['imageUrl'] = jsonEncode(imagePaths); 
+      bodyMap['imageUrl'] = jsonEncode(imagePaths);
     }
 
     try {
@@ -122,15 +123,16 @@ class IssueService {
 
       if (response.statusCode != 201) {
         print("ERRORE CREAZIONE (${response.statusCode}): ${response.body}");
+        return false;
       }
-      return response.statusCode == 201;
+      return true;
     } catch (e) {
-      print("Eccezione Creazione: $e");
+      print("ECCEZIONE: $e");
       return false;
     }
   }
-  
-  // AGGIORNA STATO
+
+  // --- AGGIORNA STATO ---
   Future<bool> updateStatus(int issueId, String newStatus) async {
     final url = Uri.parse('$baseUrl/issues/$issueId');
     final prefs = await SharedPreferences.getInstance();
