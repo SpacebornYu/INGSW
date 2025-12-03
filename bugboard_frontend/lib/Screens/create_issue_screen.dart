@@ -97,8 +97,8 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
 
     setState(() => _isLoading = true);
     
-    // Prendiamo la prima immagine (se c'è)
-    String? imagePathToSend = _selectedImages.isNotEmpty ? _selectedImages.first.path : null;
+    // MODIFICA: Creiamo la lista di stringhe per tutte le immagini
+    List<String> imagePathsToSend = _selectedImages.map((img) => img.path).toList();
 
     bool success = await _issueService.createIssue(
       _titleController.text, 
@@ -106,7 +106,7 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
       _selectedType!, 
       _selectedPriority!, 
       _labelController.text,
-      imagePathToSend // <--- Ecco il 6° argomento che causava l'errore rosso!
+      imagePathsToSend // Passiamo la lista intera!
     );
     
     setState(() => _isLoading = false);
@@ -186,6 +186,7 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                   const SizedBox(height: 16),
                   _input("Descrizione", _descController, lines: 4),
                   const SizedBox(height: 24),
+                  
                   Row(
                     children: [
                       Expanded(child: _bigBtn(_selectedType ?? "Tipo", _selectedType != null, () => _showSheet("Tipo", _types, (v) => setState(() => _selectedType = v)))),

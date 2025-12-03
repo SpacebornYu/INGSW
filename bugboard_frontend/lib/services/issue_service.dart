@@ -83,14 +83,12 @@ class IssueService {
     }
   }
 
-  // CREA ISSUE (FIXED: Accetta imagePath)
-  // Qui sotto ho aggiunto "String? imagePath" per risolvere il tuo errore rosso
-  Future<bool> createIssue(String title, String description, String type, String priority, String label, String? imagePath) async {
+  // CREA ISSUE (FIXED: Accetta LISTA di immagini)
+  Future<bool> createIssue(String title, String description, String type, String priority, String label, List<String> imagePaths) async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
-    // Mappatura Priorità (Sicura per il backend)
     String formattedPriority = priority;
     if (priority == 'Very High') formattedPriority = 'VERY HIGH';
     else if (priority == 'High') formattedPriority = 'HIGH';
@@ -106,9 +104,10 @@ class IssueService {
       'tags': [label],
     };
 
-    // Invio immagine (se presente)
-    if (imagePath != null) {
-      bodyMap['imageUrl'] = imagePath;
+    // TRUCCO: Se ci sono immagini, trasformiamo la LISTA in una STRINGA JSON
+    // Esempio: ["path1", "path2"] diventa '["path1", "path2"]'
+    if (imagePaths.isNotEmpty) {
+      bodyMap['imageUrl'] = jsonEncode(imagePaths); 
     }
 
     try {
@@ -127,6 +126,24 @@ class IssueService {
       return response.statusCode == 201;
     } catch (e) {
       print("Eccezione Creazione: $e");
+      return false;
+    }
+  }
+  
+  // AGGIORNA STATO
+  Future<bool> updateStatus(int issueId, String newStatus) async {
+    final url = Uri.parse('$baseUrl/issues/$issueId');
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({'status': newStatus}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
       return false;
     }
   }
