@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // Serve per kIsWeb
 import '../services/issue_service.dart';
 
 class CreateIssueScreen extends StatefulWidget {
-  // Callback opzionale se vogliamo notificare il successo (anche se ora gestiamo il pop con true)
   final VoidCallback? onSuccess; 
 
   const CreateIssueScreen({super.key, this.onSuccess});
@@ -20,38 +20,33 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
   
   String? _selectedType;
   String? _selectedPriority;
-  XFile? _selectedImage;
+  List<XFile> _selectedImages = [];
+  
   bool _isLoading = false;
   final IssueService _issueService = IssueService();
 
   final List<String> _types = ['Bug', 'Question', 'Documentation', 'Feature'];
   final List<String> _priorities = ['Very High', 'High', 'Medium', 'Low', 'Very Low'];
 
-  // MODIFICA 1: Rimosso _labelController.text.isNotEmpty
-  // Ora l'etichetta è opzionale
   bool get _isValid => 
       _titleController.text.isNotEmpty && 
       _descController.text.isNotEmpty && 
       _selectedType != null && 
       _selectedPriority != null;
 
-  // Serve alla Dashboard per l'alert di uscita
   bool get hasChanges {
     return _titleController.text.isNotEmpty || 
            _descController.text.isNotEmpty || 
            _selectedType != null || 
-           _labelController.text.isNotEmpty || // Se scrivo l'etichetta e esco, voglio comunque l'alert
-           _selectedPriority != null;
+           _labelController.text.isNotEmpty || 
+           _selectedPriority != null ||
+           _selectedImages.isNotEmpty;
   }
 
   void clearAll() {
     setState(() {
-      _titleController.clear(); 
-      _descController.clear(); 
-      _labelController.clear();
-      _selectedType = null; 
-      _selectedPriority = null; 
-      _selectedImage = null;
+      _titleController.clear(); _descController.clear(); _labelController.clear();
+      _selectedType = null; _selectedPriority = null; _selectedImages.clear();
     });
   }
 
@@ -73,6 +68,15 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
     );
   }
 
+  Future<void> _pickImage() async {
+    if (_selectedImages.length >= 3) return;
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) setState(() => _selectedImages.add(image));
+  }
+
+  void _removeImage(int index) => setState(() => _selectedImages.removeAt(index));
+
   void _onSubmit() async {
     if (!_isValid) return;
 
@@ -84,7 +88,7 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
         content: const Text("Creare questa issue?", style: TextStyle(color: Colors.white70)),
         actions: [
           TextButton(child: const Text("No"), onPressed: () => Navigator.pop(c, false)),
-          TextButton(child: const Text("Sì"), onPressed: () => Navigator.pop(c, true)),
+          TextButton(child: const Text("Sì", style: TextStyle(color: Colors.red)), onPressed: () => Navigator.pop(c, true)),
         ],
       )
     ) ?? false;
@@ -93,12 +97,16 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
 
     setState(() => _isLoading = true);
     
+    // Prendiamo la prima immagine (se c'è)
+    String? imagePathToSend = _selectedImages.isNotEmpty ? _selectedImages.first.path : null;
+
     bool success = await _issueService.createIssue(
       _titleController.text, 
       _descController.text, 
       _selectedType!, 
       _selectedPriority!, 
-      _labelController.text // Passiamo il testo anche se è vuoto (opzionale)
+      _labelController.text,
+      imagePathToSend // <--- Ecco il 6° argomento che causava l'errore rosso!
     );
     
     setState(() => _isLoading = false);
@@ -106,12 +114,17 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
     if (success && mounted) {
       clearAll();
       if (widget.onSuccess != null) widget.onSuccess!();
-      // Chiude la schermata tornando "true" alla Dashboard
-      // (Se usata come pagina separata dal +)
-      // Se usata dentro IndexedStack, onSuccess gestisce il cambio tab
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Errore creazione")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Errore creazione issue. Controlla il terminale."),
+        backgroundColor: Colors.red,
+      ));
     }
+  }
+
+  ImageProvider _getImageProvider(XFile file) {
+    if (kIsWeb) return NetworkImage(file.path);
+    return FileImage(File(file.path));
   }
 
   void _showSheet(String title, List<String> items, Function(String) onSelect) {
@@ -147,7 +160,6 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
       color: Colors.black,
       child: Column(
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -174,19 +186,53 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                   const SizedBox(height: 16),
                   _input("Descrizione", _descController, lines: 4),
                   const SizedBox(height: 24),
-                  
-                  // Tipo e Foto
                   Row(
                     children: [
                       Expanded(child: _bigBtn(_selectedType ?? "Tipo", _selectedType != null, () => _showSheet("Tipo", _types, (v) => setState(() => _selectedType = v)))),
                       const SizedBox(width: 16),
-                      Expanded(child: _bigBtn(_selectedImage != null ? "Foto OK" : "Foto", _selectedImage != null, () async { final img = await ImagePicker().pickImage(source: ImageSource.gallery); if(img!=null) setState(() => _selectedImage = img); })),
+                      Expanded(child: _bigBtn("Aggiungi Foto", false, _pickImage, isDisabled: _selectedImages.length >= 3)),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  
+                  if (_selectedImages.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _selectedImages.length,
+                        itemBuilder: (ctx, index) {
+                          return Stack(
+                            children: [
+                              Container(
+                                width: 100,
+                                margin: const EdgeInsets.only(right: 12, top: 10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey.shade800),
+                                  image: DecorationImage(image: _getImageProvider(_selectedImages[index]), fit: BoxFit.cover)
+                                ),
+                              ),
+                              Positioned(
+                                right: 5,
+                                top: 0,
+                                child: GestureDetector(
+                                  onTap: () => _removeImage(index),
+                                  child: Container(
+                                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                  ),
+                                ),
+                              )
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
 
-                  // MODIFICA 2: INVERTITO ORDINE
-                  // Prima la Priorità
+                  const SizedBox(height: 24),
                   GestureDetector(
                     onTap: () => _showSheet("Priorità", _priorities, (v) => setState(() => _selectedPriority = v)),
                     child: Container(
@@ -195,13 +241,9 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                       child: Text(_selectedPriority ?? "Aggiungi una priorità", style: TextStyle(color: _selectedPriority == null ? Colors.grey : Colors.white)),
                     ),
                   ),
-                  
                   const SizedBox(height: 16),
-
-                  // Poi l'Etichetta (Opzionale)
                   _input("Etichetta (Opzionale)", _labelController),
-                  
-                  const SizedBox(height: 32), // Spazio extra in fondo
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -212,5 +254,5 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
   }
 
   Widget _input(String h, TextEditingController c, {int lines=1}) => TextField(controller: c, maxLines: lines, style: const TextStyle(color: Colors.white), onChanged: (_) => setState((){}), decoration: InputDecoration(hintText: h, hintStyle: const TextStyle(color: Colors.grey), filled: true, fillColor: const Color(0xFF1C1C1E), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)));
-  Widget _bigBtn(String l, bool s, VoidCallback t) => GestureDetector(onTap: t, child: Container(height: 50, alignment: Alignment.center, decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(25), border: s ? Border.all(color: Colors.blue) : null), child: Text(l, style: TextStyle(color: s ? Colors.blue : Colors.grey, fontWeight: FontWeight.bold))));
+  Widget _bigBtn(String l, bool s, VoidCallback t, {bool isDisabled = false}) => GestureDetector(onTap: isDisabled ? null : t, child: Container(height: 50, alignment: Alignment.center, decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(25), border: s ? Border.all(color: Colors.blue) : null), child: Text(l, style: TextStyle(color: isDisabled ? Colors.grey.shade700 : (s ? Colors.blue : Colors.grey), fontWeight: FontWeight.bold))));
 }

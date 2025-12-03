@@ -22,9 +22,13 @@ class AuthService {
         final prefs = await SharedPreferences.getInstance();
         
         await prefs.setString('token', data['token']);
-        // Salviamo info utili
         await prefs.setString('email', data['user']['email']);
-        await prefs.setString('role', data['user']['role']); 
+        await prefs.setString('role', data['user']['role']);
+        
+        // SALVIAMO L'ID UTENTE (Fondamentale per cancellare i commenti)
+        if (data['user']['id'] != null) {
+          await prefs.setInt('userId', data['user']['id']);
+        }
         
         return true;
       }
@@ -37,9 +41,8 @@ class AuthService {
   }
 
   // --- REGISTRAZIONE NUOVO UTENTE (Solo Admin) ---
-  // Ritorna null se successo, oppure una Stringa con l'errore se fallisce
   Future<String?> registerUser(String email, String password, String role) async {
-    // CORREZIONE URL: somma di '/users' (index.js) + '/admin/users' (userRoutes.js)
+    // Rotta combinata corretta
     final url = Uri.parse('$baseUrl/users/admin/users'); 
     
     final prefs = await SharedPreferences.getInstance();
@@ -55,14 +58,13 @@ class AuthService {
         body: jsonEncode({
           'email': email,
           'password': password,
-          'role': role, // "ADMIN" o "USER"
+          'role': role,
         }),
       );
       
       if (response.statusCode == 201) {
-        return null; // NULL significa SUCCESSO
+        return null; // Successo
       } else {
-        // Proviamo a leggere il messaggio di errore dal backend
         try {
           final body = jsonDecode(response.body);
           return body['error'] ?? "Errore server (${response.statusCode})";

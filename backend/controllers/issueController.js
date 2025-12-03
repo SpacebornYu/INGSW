@@ -6,21 +6,19 @@ import Tag from '../models/Tag.js';
 import Comment from '../models/Comment.js';
 
 // POST /issues - crea una nuova issue
+// backend/controllers/issueController.js
+
 export async function createIssue(req, res) {
   try {
-    const { title, description, type, priority, tags } = req.body;
+    // MODIFICA 1: Aggiungi 'imageUrl' nella lista delle cose da leggere
+    const { title, description, type, priority, tags, imageUrl } = req.body;
 
     if (!title || !description || !type) {
-      return res.status(400).json({ 
-        error: 'Titolo, descrizione e tipo sono obbligatori' 
-      });
+      return res.status(400).json({ error: 'Titolo, descrizione e tipo sono obbligatori' });
     }
 
-    if (!['QUESTION', 'BUG', 'DOCUMENTATION', 'FEATURE'].includes(type)) {
-      return res.status(400).json({ error: 'Tipo non valido' });
-    }
-
-    if (priority && !['LOW', 'MEDIUM', 'HIGH', 'URGENT'].includes(priority)) {
+    // Controllo priorità aggiornato
+    if (priority && !['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH', 'URGENT'].includes(priority)) {
       return res.status(400).json({ error: 'Priorità non valida' });
     }
 
@@ -31,6 +29,8 @@ export async function createIssue(req, res) {
       priority: priority || null,
       status: 'TODO',
       creatorId: req.user.id,
+      // MODIFICA 2: Salva l'URL nel database (o null se non c'è)
+      imageUrl: imageUrl || null,
     });
 
     // Gestione tag
@@ -44,7 +44,6 @@ export async function createIssue(req, res) {
       await issue.addTags(tagInstances);
     }
 
-    // Ricarica con relazioni
     const issueWithRelations = await Issue.findByPk(issue.id, {
       include: [
         { model: User, as: 'creator', attributes: ['id', 'email'] },
@@ -58,7 +57,6 @@ export async function createIssue(req, res) {
     res.status(500).json({ error: 'Errore del server' });
   }
 }
-
 // GET /issues - lista issue con filtri
 export async function getIssues(req, res) {
   try {
@@ -155,9 +153,10 @@ export async function updateIssue(req, res) {
       issue.type = type;
     }
     if (priority !== undefined) {
-      if (priority && !['LOW', 'MEDIUM', 'HIGH', 'URGENT'].includes(priority)) {
-        return res.status(400).json({ error: 'Priorità non valida' });
-      }
+      // Aggiungi le nuove priorità alla lista di controllo:
+    if (priority && !['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH', 'URGENT'].includes(priority)) {
+  return res.status(400).json({ error: 'Priorità non valida' });
+}
       issue.priority = priority;
     }
     if (status) {

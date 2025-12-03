@@ -1,11 +1,13 @@
-// routes/commentRoutes.js
+// backend/routes/commentRoutes.js
 import express from 'express';
-import { getComments, createComment } from '../controllers/commentController.js';
+import { getComments, createComment, deleteComment } from '../controllers/commentController.js';
 import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.get('/issues/:id/comments', auth, getComments);
 router.post('/issues/:id/comments', auth, createComment);
+// NUOVA ROTTA PER CANCELLARE
+router.delete('/comments/:id', auth, deleteComment); 
 
 export default router;

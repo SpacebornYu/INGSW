@@ -64,3 +64,24 @@ export async function createComment(req, res) {
     res.status(500).json({ error: 'Errore del server' });
   }
 }
+export async function deleteComment(req, res) {
+  try {
+    const { id } = req.params;
+    const comment = await Comment.findByPk(id);
+
+    if (!comment) {
+      return res.status(404).json({ error: 'Commento non trovato' });
+    }
+
+    // Controllo permessi: Solo l'autore può cancellare (o l'admin se vuoi)
+    if (comment.userId !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Non autorizzato' });
+    }
+
+    await comment.destroy();
+    res.json({ message: 'Commento eliminato' });
+  } catch (error) {
+    console.error('Errore eliminazione commento:', error);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+}
