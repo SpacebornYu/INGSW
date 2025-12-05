@@ -30,7 +30,7 @@ class _AccountScreenState extends State<AccountScreen> {
   void _logout() {
     showDialog(context: context, builder: (c) => AlertDialog(
       backgroundColor: const Color(0xFF2C2C2C), title: const Text("Logout", style: TextStyle(color: Colors.white)),
-      content: const Text("Uscire?", style: TextStyle(color: Colors.white70)),
+      content: const Text("Sei sicuro di voler uscire? Per accedere dovrai nuovamente effettuare il login.", style: TextStyle(color: Colors.white70)),
       actions: [
         TextButton(child: const Text("Annulla"), onPressed: () => Navigator.pop(c)),
         TextButton(child: const Text("Esci", style: TextStyle(color: Colors.red)), onPressed: () {
