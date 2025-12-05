@@ -4,9 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/issue.dart';
 
 class IssueService {
-  static const String baseUrl = 'http://localhost:3000'; 
+  static const String baseUrl = 'http://localhost:3000';
 
-  // GET LISTA
+  //LISTA
   Future<List<Issue>> getIssues() async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
@@ -28,7 +28,7 @@ class IssueService {
     }
   }
 
-  // GET DETTAGLIO
+  //DETTAGLIO
   Future<Issue?> getIssueDetails(int id) async {
     final url = Uri.parse('$baseUrl/issues/$id');
     final prefs = await SharedPreferences.getInstance();
@@ -83,7 +83,7 @@ class IssueService {
     }
   }
 
-  // --- CREA ISSUE (AGGIORNATO: labels è una Lista) ---
+  //CREA ISSUE
   Future<bool> createIssue(String title, String description, String type, String priority, List<String> labels, List<String> imagePaths) async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
@@ -101,11 +101,11 @@ class IssueService {
       'description': description,
       'type': type.toUpperCase(),
       'priority': formattedPriority,
-      'tags': labels, // Passiamo direttamente la lista!
+      'tags': labels,
     };
 
     if (imagePaths.isNotEmpty) {
-      bodyMap['imageUrl'] = jsonEncode(imagePaths); 
+      bodyMap['imageUrl'] = jsonEncode(imagePaths);
     }
 
     try {
@@ -128,7 +128,6 @@ class IssueService {
       return false;
     }
   }
-  
   // AGGIORNA STATO
   Future<bool> updateStatus(int issueId, String newStatus) async {
     final url = Uri.parse('$baseUrl/issues/$issueId');

@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart'; // Per kIsWeb
 import '../services/issue_service.dart';
 
 class CreateIssueScreen extends StatefulWidget {
-  final VoidCallback? onSuccess; 
+  final VoidCallback? onSuccess;
 
   const CreateIssueScreen({super.key, this.onSuccess});
 
@@ -17,28 +17,26 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final _labelController = TextEditingController(); // Controller per l'input
-  
   String? _selectedType;
   String? _selectedPriority;
   List<XFile> _selectedImages = [];
   List<String> _tags = []; // LISTA DELLE ETICHETTE
-  
   bool _isLoading = false;
   final IssueService _issueService = IssueService();
 
   final List<String> _types = ['Bug', 'Question', 'Documentation', 'Feature'];
   final List<String> _priorities = ['Very High', 'High', 'Medium', 'Low', 'Very Low'];
 
-  bool get _isValid => 
-      _titleController.text.isNotEmpty && 
-      _descController.text.isNotEmpty && 
-      _selectedType != null && 
+  bool get _isValid =>
+      _titleController.text.isNotEmpty &&
+      _descController.text.isNotEmpty &&
+      _selectedType != null &&
       _selectedPriority != null;
 
   bool get hasChanges {
-    return _titleController.text.isNotEmpty || 
-           _descController.text.isNotEmpty || 
-           _selectedType != null || 
+    return _titleController.text.isNotEmpty ||
+           _descController.text.isNotEmpty ||
+           _selectedType != null ||
            _tags.isNotEmpty || // Controlliamo se ci sono tag
            _selectedPriority != null ||
            _selectedImages.isNotEmpty;
@@ -46,11 +44,11 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
 
   void clearAll() {
     setState(() {
-      _titleController.clear(); 
-      _descController.clear(); 
+      _titleController.clear();
+      _descController.clear();
       _labelController.clear();
-      _selectedType = null; 
-      _selectedPriority = null; 
+      _selectedType = null;
+      _selectedPriority = null;
       _selectedImages.clear();
       _tags.clear(); // Puliamo i tag
     });
@@ -121,18 +119,16 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
     if (!confirm) return;
 
     setState(() => _isLoading = true);
-    
     List<String> imagePathsToSend = _selectedImages.map((img) => img.path).toList();
 
     bool success = await _issueService.createIssue(
-      _titleController.text, 
-      _descController.text, 
-      _selectedType!, 
-      _selectedPriority!, 
-      _tags, // Inviamo la lista di tag!
+      _titleController.text,
+      _descController.text,
+      _selectedType!,
+      _selectedPriority!,
+      _tags, // Inviamo la lista di tag
       imagePathsToSend
     );
-    
     setState(() => _isLoading = false);
 
     if (success && mounted) {
@@ -192,15 +188,14 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                 TextButton(onPressed: _onClean, child: const Text("Pulisci", style: TextStyle(color: Colors.blue, fontSize: 16))),
                 const Text("Nuova Issue", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 TextButton(
-                  onPressed: _isValid && !_isLoading ? _onSubmit : null, 
-                  child: _isLoading 
+                  onPressed: _isValid && !_isLoading ? _onSubmit : null,
+                  child: _isLoading
                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : Text("Crea", style: TextStyle(color: _isValid ? Colors.green : Colors.grey.shade700, fontSize: 16, fontWeight: FontWeight.bold))
                 ),
               ],
             ),
           ),
-          
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -217,7 +212,6 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                       Expanded(child: _bigBtn("Aggiungi Foto", false, _pickImage, isDisabled: _selectedImages.length >= 3)),
                     ],
                   ),
-                  
                   if (_selectedImages.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     SizedBox(
@@ -265,25 +259,22 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                       child: Text(_selectedPriority ?? "Aggiungi una priorità", style: TextStyle(color: _selectedPriority == null ? Colors.grey : Colors.white)),
                     ),
                   ),
-                  
                   const SizedBox(height: 16),
-                  
-                  // --- CAMPO ETICHETTE MULTIPLE ---
+                  // ETICHETTE MULTIPLE
                   TextField(
                     controller: _labelController,
                     style: const TextStyle(color: Colors.white),
                     // QUANDO PREMI INVIO:
-                    onSubmitted: _addTag, 
+                    onSubmitted: _addTag,
                     decoration: InputDecoration(
                       hintText: "Aggiungi etichetta (Premi Invio)",
                       hintStyle: const TextStyle(color: Colors.grey),
-                      filled: true, 
-                      fillColor: const Color(0xFF1C1C1E), 
+                      filled: true,
+                      fillColor: const Color(0xFF1C1C1E),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)
                     ),
                   ),
-                  
-                  // VISUALIZZAZIONE CHIP ETICHETTE
+                  // VISUALIZZAZIONE A CHIP DELLE ETICHETTE
                   if (_tags.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 12.0),
@@ -299,7 +290,6 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                         )).toList(),
                       ),
                     ),
-                  
                   const SizedBox(height: 32),
                 ],
               ),

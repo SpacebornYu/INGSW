@@ -18,13 +18,13 @@ class _AccountScreenState extends State<AccountScreen> {
 
   @override
   void initState() { super.initState(); _load(); }
-  
-  void _load() async { 
-    final p = await SharedPreferences.getInstance(); 
-    setState(() { 
-      _email = p.getString('email') ?? ""; 
-      _role = p.getString('role') ?? ""; 
-    }); 
+
+  void _load() async {
+    final p = await SharedPreferences.getInstance();
+    setState(() {
+      _email = p.getString('email') ?? "";
+      _role = p.getString('role') ?? "";
+    });
   }
 
   void _logout() {
@@ -41,24 +41,22 @@ class _AccountScreenState extends State<AccountScreen> {
     ));
   }
 
-  // --- NUOVA MODALE PIÙ LARGA E SPAZIOSA ---
   void _create() {
-    final ec = TextEditingController(); 
-    final pc = TextEditingController(); 
+    final ec = TextEditingController();
+    final pc = TextEditingController();
     final rpc = TextEditingController();
     String nr = 'USER';
-    
     showDialog(
-      context: context, 
+      context: context,
       builder: (c) => StatefulBuilder(
         builder: (ctx, setS) => Dialog( // Uso Dialog per controllare la larghezza
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20), // Molto più largo
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: const Color(0xFF1C1C1E),
           child: Padding(
-            padding: const EdgeInsets.all(24.0), // Padding interno generoso
+            padding: const EdgeInsets.all(24.0), // Padding interno
             child: Column(
-              mainAxisSize: MainAxisSize.min, 
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Center(child: Text("Nuovo Utente", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold))),
@@ -66,17 +64,17 @@ class _AccountScreenState extends State<AccountScreen> {
 
                 const Text("Email", style: TextStyle(color: Colors.grey, fontSize: 14)),
                 const SizedBox(height: 8),
-                _in(ec, "Inserisci email"), 
+                _in(ec, "Inserisci email"),
                 const SizedBox(height: 20), // Spazio tra i campi
 
                 const Text("Password", style: TextStyle(color: Colors.grey, fontSize: 14)),
                 const SizedBox(height: 8),
-                _in(pc, "Password", obs: true), 
+                _in(pc, "Password", obs: true),
                 const SizedBox(height: 20),
 
                 const Text("Ripeti Password", style: TextStyle(color: Colors.grey, fontSize: 14)),
                 const SizedBox(height: 8),
-                _in(rpc, "Conferma password", obs: true), 
+                _in(rpc, "Conferma password", obs: true),
                 const SizedBox(height: 30),
 
                 // Toggle Ruolo
@@ -86,12 +84,11 @@ class _AccountScreenState extends State<AccountScreen> {
                     color: const Color(0xFF2C2C2C),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(children: [ 
-                    _rBtn("User", nr=='USER', ()=>setS(()=>nr='USER')), 
-                    _rBtn("Admin", nr=='ADMIN', ()=>setS(()=>nr='ADMIN')) 
+                  child: Row(children: [
+                    _rBtn("User", nr=='USER', ()=>setS(()=>nr='USER')),
+                    _rBtn("Admin", nr=='ADMIN', ()=>setS(()=>nr='ADMIN'))
                   ]),
                 ),
-                
                 const SizedBox(height: 30),
 
                 // Bottoni Azione
@@ -99,7 +96,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(
-                      child: const Text("Annulla", style: TextStyle(color: Colors.grey, fontSize: 16)), 
+                      child: const Text("Annulla", style: TextStyle(color: Colors.grey, fontSize: 16)),
                       onPressed: () => Navigator.pop(c)
                     ),
                     ElevatedButton(
@@ -108,7 +105,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12)
                       ),
-                      child: const Text("Crea", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), 
+                      child: const Text("Crea", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       onPressed: () async {
                         if(pc.text != rpc.text) {
                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Le password non coincidono")));
@@ -135,26 +132,25 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Widget _in(TextEditingController c, String h, {bool obs=false}) => TextField(
-    controller: c, obscureText: obs, 
-    style: const TextStyle(color: Colors.white), 
+    controller: c, obscureText: obs,
+    style: const TextStyle(color: Colors.white),
     decoration: InputDecoration(
-      hintText: h, hintStyle: const TextStyle(color: Colors.grey), 
-      filled: true, fillColor: const Color(0xFF2C2C2C), 
+      hintText: h, hintStyle: const TextStyle(color: Colors.grey),
+      filled: true, fillColor: const Color(0xFF2C2C2C),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)
     )
   );
-  
   Widget _rBtn(String l, bool a, VoidCallback t) => Expanded(
     child: GestureDetector(
-      onTap: t, 
+      onTap: t,
       child: Container(
-        alignment: Alignment.center, 
+        alignment: Alignment.center,
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: a ? Colors.blueAccent : Colors.transparent, 
+          color: a ? Colors.blueAccent : Colors.transparent,
           borderRadius: BorderRadius.circular(10)
-        ), 
+        ),
         child: Text(l, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))
       )
     )
