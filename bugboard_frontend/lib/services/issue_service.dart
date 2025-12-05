@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/issue.dart';
 
 class IssueService {
-  // Usa localhost per Chrome/iOS, 10.0.2.2 per Android
+  // Usa localhost per Web/iOS, 10.0.2.2 per Android
   static const String baseUrl = 'http://localhost:3000'; 
 
   // --- GET LISTA ---
@@ -84,20 +84,19 @@ class IssueService {
     }
   }
 
-  // --- CREA ISSUE (AGGIORNATO PER LISTA IMMAGINI) ---
+  // --- CREA ISSUE (CORRETTO: Accetta List<String>) ---
   Future<bool> createIssue(String title, String description, String type, String priority, String label, List<String> imagePaths) async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
-    // Mappatura Priorità sicura
     String formattedPriority = priority;
     if (priority == 'Very High') formattedPriority = 'VERY HIGH';
     else if (priority == 'High') formattedPriority = 'HIGH';
     else if (priority == 'Medium') formattedPriority = 'MEDIUM';
     else if (priority == 'Low') formattedPriority = 'LOW';
     else if (priority == 'Very Low') formattedPriority = 'VERY LOW';
-    
+
     Map<String, dynamic> bodyMap = {
       'title': title,
       'description': description,
@@ -105,10 +104,10 @@ class IssueService {
       'priority': formattedPriority,
       'tags': [label],
     };
-    
-    // TRUCCO: Convertiamo la lista di percorsi in una stringa JSON
+
+    // Impacchetta la lista in una stringa JSON
     if (imagePaths.isNotEmpty) {
-      bodyMap['imageUrl'] = jsonEncode(imagePaths);
+      bodyMap['imageUrl'] = jsonEncode(imagePaths); 
     }
 
     try {
@@ -122,10 +121,9 @@ class IssueService {
       );
 
       if (response.statusCode != 201) {
-        print("ERRORE CREAZIONE (${response.statusCode}): ${response.body}");
-        return false;
+        print("ERRORE CREAZIONE: ${response.body}");
       }
-      return true;
+      return response.statusCode == 201;
     } catch (e) {
       print("ECCEZIONE: $e");
       return false;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // Serve per kIsWeb
+import 'package:flutter/foundation.dart'; // Per kIsWeb
 import '../services/issue_service.dart';
 
 class CreateIssueScreen extends StatefulWidget {
@@ -97,7 +97,7 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
 
     setState(() => _isLoading = true);
     
-    // FIX: Convertiamo la lista di XFile in una lista di Stringhe (path)
+    // Trasforma XFile in stringhe
     List<String> imagePathsToSend = _selectedImages.map((img) => img.path).toList();
 
     bool success = await _issueService.createIssue(
@@ -106,7 +106,7 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
       _selectedType!, 
       _selectedPriority!, 
       _labelController.text,
-      imagePathsToSend // ORA PASSIAMO LA LISTA!
+      imagePathsToSend // Passa la lista
     );
     
     setState(() => _isLoading = false);
@@ -116,7 +116,7 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
       if (widget.onSuccess != null) widget.onSuccess!();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Errore creazione issue. Controlla il terminale."),
+        content: Text("Errore creazione issue."),
         backgroundColor: Colors.red,
       ));
     }

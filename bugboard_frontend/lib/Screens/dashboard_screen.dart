@@ -3,7 +3,7 @@ import '../models/issue.dart';
 import '../services/issue_service.dart';
 import 'create_issue_screen.dart';
 import 'account_screen.dart';
-import 'issue_detail_screen.dart'; 
+import 'issue_detail_screen.dart'; // Fondamentale per i dettagli
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,17 +15,20 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final IssueService _issueService = IssueService();
   
+  // Dati
   List<Issue> _allIssues = [];      
   List<Issue> _filteredIssues = []; 
   bool _isLoading = true;
   String _errorMessage = "";
 
+  // Stato Filtri
   String _searchQuery = "";
   Set<String> _selectedTypes = {};     
   Set<String> _selectedStatuses = {};   
   Set<String> _selectedPriorities = {}; 
   Set<String> _selectedLabels = {};    
 
+  // Navigazione
   int _selectedIndex = 0;
   final GlobalKey<CreateIssueScreenState> _createIssueKey = GlobalKey();
 
@@ -52,24 +55,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  // MOTORE DI FILTRAGGIO
   void _applyFilters() {
     setState(() {
       _filteredIssues = _allIssues.where((issue) {
+        // 1. Ricerca
         if (_searchQuery.isNotEmpty) {
           final q = _searchQuery.toLowerCase();
           if (!issue.title.toLowerCase().contains(q) && 
               !issue.description.toLowerCase().contains(q)) return false;
         }
-        
+        // 2. Filtri Multipli
         if (_selectedTypes.isNotEmpty && !_selectedTypes.contains(issue.type)) return false;
         if (_selectedStatuses.isNotEmpty && !_selectedStatuses.contains(issue.status)) return false;
         
         if (_selectedPriorities.isNotEmpty) {
-          String normPriority = issue.priority?.toUpperCase().replaceAll(' ', '_') ?? "";
-          Set<String> normFilters = _selectedPriorities.map((p) => p.toUpperCase().replaceAll(' ', '_')).toSet();
-          if (!normFilters.contains(normPriority)) return false;
+           // Normalizziamo la priorità
+           String normPriority = issue.priority?.toUpperCase().replaceAll(' ', '_') ?? "";
+           Set<String> normFilters = _selectedPriorities.map((p) => p.toUpperCase().replaceAll(' ', '_')).toSet();
+           if (!normFilters.contains(normPriority)) return false;
         }
         
+        // 3. Filtro Etichetta
         if (_selectedLabels.isNotEmpty) {
           bool hasMatch = issue.tags.any((tag) => _selectedLabels.contains(tag));
           if (!hasMatch) return false;
@@ -80,6 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  // --- UI HELPER: Bottoni Filtro ---
   Widget _buildFilterChip(String label, Set<String> selectedValues, Function(Set<String>) onUpdate) {
     bool isActive = selectedValues.isNotEmpty;
     String buttonText = label;
@@ -94,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return GestureDetector(
       onTap: () {
         if (isActive) {
-          onUpdate({}); 
+          onUpdate({}); // Reset rapido
         }
       },
       child: Container(
@@ -207,7 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
     setState(() => _selectedIndex = index);
-    if (index == 0) _loadIssues(); 
+    if (index == 0) _loadIssues();
   }
 
   @override
@@ -218,9 +226,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: IndexedStack(
           index: _selectedIndex,
           children: [
-            _buildDashboardContent(), 
-            CreateIssueScreen(key: _createIssueKey, onSuccess: () { _onItemTapped(0); _loadIssues(); }), 
-            const AccountScreen(), 
+            _buildDashboardContent(), // 0
+            CreateIssueScreen(key: _createIssueKey, onSuccess: () { _onItemTapped(0); _loadIssues(); }), // 1
+            const AccountScreen(), // 2
           ],
         ),
       ),
@@ -240,11 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboardContent() {
-    // FIX: Filtriamo le etichette vuote per non mostrarle nel menu!
-    final Set<String> existingTags = _allIssues
-        .expand((i) => i.tags)
-        .where((t) => t.trim().isNotEmpty) // <--- QUESTO RIMUOVE QUELLE VUOTE
-        .toSet();
+    final Set<String> existingTags = _allIssues.expand((i) => i.tags).where((t) => t.trim().isNotEmpty).toSet();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -296,8 +300,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
-          else if (_errorMessage.isNotEmpty)
-            Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
           else if (_filteredIssues.isEmpty)
             Center(
               child: Padding(
@@ -315,8 +317,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               decoration: BoxDecoration(color: const Color(0xFF1C1C1E), borderRadius: BorderRadius.circular(16)),
               child: ListView.separated(
-                shrinkWrap: true, 
-                physics: const NeverScrollableScrollPhysics(), 
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: _filteredIssues.length,
                 separatorBuilder: (_, __) => const Divider(color: Colors.grey, height: 1, indent: 60),
                 itemBuilder: (context, index) {
@@ -363,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
+        color: color.withValues(alpha: 0.2), // Usa withValues o withOpacity a seconda della versione Flutter
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color.withValues(alpha: 0.5), width: 0.5)
       ),
@@ -383,12 +385,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _getPriorityIcon(String? priority) {
     if (priority == null) return const SizedBox();
+    
     String p = priority.toUpperCase().replaceAll(' ', '_'); 
+    
     if (p == 'VERY_HIGH') return const Icon(Icons.keyboard_double_arrow_up, color: Colors.red, size: 18);
     if (p == 'HIGH') return const Icon(Icons.keyboard_arrow_up, color: Colors.redAccent, size: 18);
     if (p == 'MEDIUM') return const Icon(Icons.drag_handle, color: Colors.orange, size: 18);
     if (p == 'VERY_LOW') return const Icon(Icons.keyboard_double_arrow_down, color: Colors.blue, size: 18);
     if (p == 'LOW') return const Icon(Icons.keyboard_arrow_down, color: Colors.blueAccent, size: 18);
+    
     return const Icon(Icons.help_outline, color: Colors.grey, size: 18);
   }
 }
