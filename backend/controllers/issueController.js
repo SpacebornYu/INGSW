@@ -160,7 +160,7 @@ export async function updateIssue(req, res) {
       issue.priority = priority;
     }
     if (status) {
-      if (!['TODO', 'IN_PROGRESS', 'DONE'].includes(status)) {
+      if (!['TODO', 'IN_CORSO', 'COMPLETATA'].includes(status)) {
         return res.status(400).json({ error: 'Stato non valido' });
       }
       issue.status = status;

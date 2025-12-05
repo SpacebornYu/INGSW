@@ -16,11 +16,12 @@ class CreateIssueScreen extends StatefulWidget {
 class CreateIssueScreenState extends State<CreateIssueScreen> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  final _labelController = TextEditingController();
+  final _labelController = TextEditingController(); // Controller per l'input
   
   String? _selectedType;
   String? _selectedPriority;
   List<XFile> _selectedImages = [];
+  List<String> _tags = []; // LISTA DELLE ETICHETTE
   
   bool _isLoading = false;
   final IssueService _issueService = IssueService();
@@ -38,15 +39,20 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
     return _titleController.text.isNotEmpty || 
            _descController.text.isNotEmpty || 
            _selectedType != null || 
-           _labelController.text.isNotEmpty || 
+           _tags.isNotEmpty || // Controlliamo se ci sono tag
            _selectedPriority != null ||
            _selectedImages.isNotEmpty;
   }
 
   void clearAll() {
     setState(() {
-      _titleController.clear(); _descController.clear(); _labelController.clear();
-      _selectedType = null; _selectedPriority = null; _selectedImages.clear();
+      _titleController.clear(); 
+      _descController.clear(); 
+      _labelController.clear();
+      _selectedType = null; 
+      _selectedPriority = null; 
+      _selectedImages.clear();
+      _tags.clear(); // Puliamo i tag
     });
   }
 
@@ -66,6 +72,25 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
         ],
       )
     );
+  }
+
+  // LOGICA AGGIUNTA TAG
+  void _addTag(String value) {
+    if (value.trim().isEmpty) return;
+    if (_tags.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Massimo 5 etichette!")));
+      return;
+    }
+    setState(() {
+      _tags.add(value.trim());
+      _labelController.clear(); // Pulisce l'input per scriverne un'altra
+    });
+  }
+
+  void _removeTag(String tag) {
+    setState(() {
+      _tags.remove(tag);
+    });
   }
 
   Future<void> _pickImage() async {
@@ -97,7 +122,6 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
 
     setState(() => _isLoading = true);
     
-    // Trasforma XFile in stringhe
     List<String> imagePathsToSend = _selectedImages.map((img) => img.path).toList();
 
     bool success = await _issueService.createIssue(
@@ -105,8 +129,8 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
       _descController.text, 
       _selectedType!, 
       _selectedPriority!, 
-      _labelController.text,
-      imagePathsToSend // Passa la lista
+      _tags, // Inviamo la lista di tag!
+      imagePathsToSend
     );
     
     setState(() => _isLoading = false);
@@ -241,8 +265,41 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
                       child: Text(_selectedPriority ?? "Aggiungi una priorità", style: TextStyle(color: _selectedPriority == null ? Colors.grey : Colors.white)),
                     ),
                   ),
+                  
                   const SizedBox(height: 16),
-                  _input("Etichetta (Opzionale)", _labelController),
+                  
+                  // --- CAMPO ETICHETTE MULTIPLE ---
+                  TextField(
+                    controller: _labelController,
+                    style: const TextStyle(color: Colors.white),
+                    // QUANDO PREMI INVIO:
+                    onSubmitted: _addTag, 
+                    decoration: InputDecoration(
+                      hintText: "Aggiungi etichetta (Premi Invio)",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true, 
+                      fillColor: const Color(0xFF1C1C1E), 
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)
+                    ),
+                  ),
+                  
+                  // VISUALIZZAZIONE CHIP ETICHETTE
+                  if (_tags.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        children: _tags.map((tag) => Chip(
+                          label: Text(tag, style: const TextStyle(color: Colors.white)),
+                          backgroundColor: const Color(0xFF2C2C2C),
+                          deleteIcon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                          onDeleted: () => _removeTag(tag),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.grey.shade800)),
+                        )).toList(),
+                      ),
+                    ),
+                  
                   const SizedBox(height: 32),
                 ],
               ),

@@ -3,7 +3,7 @@ import '../models/issue.dart';
 import '../services/issue_service.dart';
 import 'create_issue_screen.dart';
 import 'account_screen.dart';
-import 'issue_detail_screen.dart'; // Fondamentale per i dettagli
+import 'issue_detail_screen.dart'; 
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,20 +15,17 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final IssueService _issueService = IssueService();
   
-  // Dati
   List<Issue> _allIssues = [];      
   List<Issue> _filteredIssues = []; 
   bool _isLoading = true;
   String _errorMessage = "";
 
-  // Stato Filtri
   String _searchQuery = "";
   Set<String> _selectedTypes = {};     
   Set<String> _selectedStatuses = {};   
   Set<String> _selectedPriorities = {}; 
   Set<String> _selectedLabels = {};    
 
-  // Navigazione
   int _selectedIndex = 0;
   final GlobalKey<CreateIssueScreenState> _createIssueKey = GlobalKey();
 
@@ -55,39 +52,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // MOTORE DI FILTRAGGIO
   void _applyFilters() {
     setState(() {
       _filteredIssues = _allIssues.where((issue) {
-        // 1. Ricerca
         if (_searchQuery.isNotEmpty) {
           final q = _searchQuery.toLowerCase();
           if (!issue.title.toLowerCase().contains(q) && 
               !issue.description.toLowerCase().contains(q)) return false;
         }
-        // 2. Filtri Multipli
         if (_selectedTypes.isNotEmpty && !_selectedTypes.contains(issue.type)) return false;
         if (_selectedStatuses.isNotEmpty && !_selectedStatuses.contains(issue.status)) return false;
         
         if (_selectedPriorities.isNotEmpty) {
-           // Normalizziamo la priorità
            String normPriority = issue.priority?.toUpperCase().replaceAll(' ', '_') ?? "";
            Set<String> normFilters = _selectedPriorities.map((p) => p.toUpperCase().replaceAll(' ', '_')).toSet();
            if (!normFilters.contains(normPriority)) return false;
         }
         
-        // 3. Filtro Etichetta
         if (_selectedLabels.isNotEmpty) {
           bool hasMatch = issue.tags.any((tag) => _selectedLabels.contains(tag));
           if (!hasMatch) return false;
         }
-
         return true;
       }).toList();
     });
   }
 
-  // --- UI HELPER: Bottoni Filtro ---
   Widget _buildFilterChip(String label, Set<String> selectedValues, Function(Set<String>) onUpdate) {
     bool isActive = selectedValues.isNotEmpty;
     String buttonText = label;
@@ -100,11 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return GestureDetector(
-      onTap: () {
-        if (isActive) {
-          onUpdate({}); // Reset rapido
-        }
-      },
+      onTap: () { if (isActive) onUpdate({}); },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         margin: const EdgeInsets.only(right: 8),
@@ -226,9 +212,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: IndexedStack(
           index: _selectedIndex,
           children: [
-            _buildDashboardContent(), // 0
-            CreateIssueScreen(key: _createIssueKey, onSuccess: () { _onItemTapped(0); _loadIssues(); }), // 1
-            const AccountScreen(), // 2
+            _buildDashboardContent(), 
+            CreateIssueScreen(key: _createIssueKey, onSuccess: () { _onItemTapped(0); _loadIssues(); }), 
+            const AccountScreen(), 
           ],
         ),
       ),
@@ -239,9 +225,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'All issues'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'New Issue'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Account'),
+          BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Tutte'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Nuova'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profilo'),
         ],
       ),
     );
@@ -277,8 +263,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: AbsorbPointer(child: _buildFilterChip("Tipo", _selectedTypes, (_) {})),
                 ),
                 const SizedBox(width: 8),
+                // FIX: Qui usiamo i valori ITALIANI del DB nel filtro
                 GestureDetector(
-                  onTap: () => _showMultiSelectSheet("lo Stato", ['TODO', 'IN_PROGRESS', 'DONE'], _selectedStatuses, (val) { setState(() { _selectedStatuses = val; _applyFilters(); }); }),
+                  onTap: () => _showMultiSelectSheet("lo Stato", ['TODO', 'IN_CORSO', 'COMPLETATA'], _selectedStatuses, (val) { setState(() { _selectedStatuses = val; _applyFilters(); }); }),
                   child: AbsorbPointer(child: _buildFilterChip("Stato", _selectedStatuses, (_) {})),
                 ),
                 const SizedBox(width: 8),
@@ -342,7 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           _getPriorityIcon(issue.priority),
                           const SizedBox(width: 8),
-                          _buildStatusBadge(issue.status),
+                          _buildStatusBadge(issue.status), // <--- Ora colorerà giusto
                         ],
                       ),
                     ),
@@ -355,19 +342,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // --- FIX COLORI ITALIANI ---
   Widget _buildStatusBadge(String status) {
     Color color = Colors.grey;
-    String text = status.replaceAll('_', ' ');
-    if (status == 'TODO') { color = Colors.orange; text = "To do"; }
-    if (status == 'IN_PROGRESS') { color = Colors.blue; text = "In corso"; }
-    if (status == 'DONE') { color = Colors.green; text = "Completata"; }
+    String text = status.replaceAll('_', ' '); // "IN CORSO"
+    
+    if (status == 'TODO') { 
+      color = Colors.orange; 
+      text = "To Do"; 
+    } 
+    else if (status == 'IN_CORSO') { // <-- Questo è il valore che arriva dal DB
+      color = Colors.blue; 
+      text = "In Corso"; 
+    } 
+    else if (status == 'COMPLETATA') { // <-- Questo è il valore che arriva dal DB
+      color = Colors.green; 
+      text = "Completata"; 
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2), // Usa withValues o withOpacity a seconda della versione Flutter
+        color: color.withOpacity(0.2), 
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.5), width: 0.5)
+        border: Border.all(color: color.withOpacity(0.5), width: 0.5)
       ),
       child: Text(text, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
     );
@@ -388,11 +386,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     String p = priority.toUpperCase().replaceAll(' ', '_'); 
     
-    if (p == 'VERY_HIGH') return const Icon(Icons.keyboard_double_arrow_up, color: Colors.red, size: 18);
-    if (p == 'HIGH') return const Icon(Icons.keyboard_arrow_up, color: Colors.redAccent, size: 18);
-    if (p == 'MEDIUM') return const Icon(Icons.drag_handle, color: Colors.orange, size: 18);
-    if (p == 'VERY_LOW') return const Icon(Icons.keyboard_double_arrow_down, color: Colors.blue, size: 18);
-    if (p == 'LOW') return const Icon(Icons.keyboard_arrow_down, color: Colors.blueAccent, size: 18);
+    if (p.contains('VERY_HIGH')) return const Icon(Icons.keyboard_double_arrow_up, color: Colors.red, size: 18);
+    if (p.contains('HIGH')) return const Icon(Icons.keyboard_arrow_up, color: Colors.redAccent, size: 18);
+    if (p.contains('MEDIUM')) return const Icon(Icons.drag_handle, color: Colors.orange, size: 18);
+    if (p.contains('VERY_LOW')) return const Icon(Icons.keyboard_double_arrow_down, color: Colors.blue, size: 18);
+    if (p.contains('LOW')) return const Icon(Icons.keyboard_arrow_down, color: Colors.blueAccent, size: 18);
     
     return const Icon(Icons.help_outline, color: Colors.grey, size: 18);
   }

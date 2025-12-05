@@ -4,10 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/issue.dart';
 
 class IssueService {
-  // Usa localhost per Web/iOS, 10.0.2.2 per Android
   static const String baseUrl = 'http://localhost:3000'; 
 
-  // --- GET LISTA ---
+  // GET LISTA
   Future<List<Issue>> getIssues() async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
@@ -29,7 +28,7 @@ class IssueService {
     }
   }
 
-  // --- GET DETTAGLIO ---
+  // GET DETTAGLIO
   Future<Issue?> getIssueDetails(int id) async {
     final url = Uri.parse('$baseUrl/issues/$id');
     final prefs = await SharedPreferences.getInstance();
@@ -49,7 +48,7 @@ class IssueService {
     }
   }
 
-  // --- POST COMMENTO ---
+  // POST COMMENTO
   Future<bool> postComment(int issueId, String content) async {
     final url = Uri.parse('$baseUrl/issues/$issueId/comments');
     final prefs = await SharedPreferences.getInstance();
@@ -67,7 +66,7 @@ class IssueService {
     }
   }
 
-  // --- DELETE COMMENTO ---
+  // DELETE COMMENTO
   Future<bool> deleteComment(int commentId) async {
     final url = Uri.parse('$baseUrl/comments/$commentId');
     final prefs = await SharedPreferences.getInstance();
@@ -84,8 +83,8 @@ class IssueService {
     }
   }
 
-  // --- CREA ISSUE (CORRETTO: Accetta List<String>) ---
-  Future<bool> createIssue(String title, String description, String type, String priority, String label, List<String> imagePaths) async {
+  // --- CREA ISSUE (AGGIORNATO: labels è una Lista) ---
+  Future<bool> createIssue(String title, String description, String type, String priority, List<String> labels, List<String> imagePaths) async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -102,10 +101,9 @@ class IssueService {
       'description': description,
       'type': type.toUpperCase(),
       'priority': formattedPriority,
-      'tags': [label],
+      'tags': labels, // Passiamo direttamente la lista!
     };
 
-    // Impacchetta la lista in una stringa JSON
     if (imagePaths.isNotEmpty) {
       bodyMap['imageUrl'] = jsonEncode(imagePaths); 
     }
@@ -121,16 +119,17 @@ class IssueService {
       );
 
       if (response.statusCode != 201) {
-        print("ERRORE CREAZIONE: ${response.body}");
+        print("ERRORE CREAZIONE (${response.statusCode}): ${response.body}");
+        return false;
       }
-      return response.statusCode == 201;
+      return true;
     } catch (e) {
       print("ECCEZIONE: $e");
       return false;
     }
   }
-
-  // --- AGGIORNA STATO ---
+  
+  // AGGIORNA STATO
   Future<bool> updateStatus(int issueId, String newStatus) async {
     final url = Uri.parse('$baseUrl/issues/$issueId');
     final prefs = await SharedPreferences.getInstance();

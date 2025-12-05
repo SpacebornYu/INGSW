@@ -7,7 +7,9 @@ import '../services/issue_service.dart';
 
 class IssueDetailScreen extends StatefulWidget {
   final int issueId;
+
   const IssueDetailScreen({super.key, required this.issueId});
+
   @override
   State<IssueDetailScreen> createState() => _IssueDetailScreenState();
 }
@@ -44,7 +46,6 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     }
   }
 
-  // Decodifica la stringa JSON in una lista di immagini
   List<String> _parseImages(String? jsonString) {
     if (jsonString == null || jsonString.isEmpty) return [];
     try {
@@ -69,11 +70,11 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
               Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(2))),
               const Text("Aggiorna Stato", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),
-              _buildFancyStatusOption("To do", "TODO", Colors.orange, Icons.schedule),
+              _buildFancyStatusOption("To Do", "TODO", Colors.orange, Icons.schedule),
               const SizedBox(height: 12),
-              _buildFancyStatusOption("In corso", "IN_PROGRESS", Colors.blue, Icons.autorenew),
+              _buildFancyStatusOption("In Corso", "IN_CORSO", Colors.blue, Icons.autorenew),
               const SizedBox(height: 12),
-              _buildFancyStatusOption("Completata", "DONE", Colors.green, Icons.check_circle_outline),
+              _buildFancyStatusOption("Completata", "COMPLETATA", Colors.green, Icons.check_circle_outline),
             ],
           ),
         );
@@ -97,7 +98,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       },
       child: Container(
         width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-        decoration: BoxDecoration(color: isSelected ? color.withValues(alpha: 0.2) : const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(16), border: Border.all(color: isSelected ? color : Colors.transparent, width: 2)),
+        decoration: BoxDecoration(color: isSelected ? color.withOpacity(0.2) : const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(16), border: Border.all(color: isSelected ? color : Colors.transparent, width: 2)),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Row(children: [Icon(icon, color: isSelected ? color : Colors.grey, size: 24), const SizedBox(width: 16), Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.grey.shade400, fontSize: 16, fontWeight: FontWeight.bold))]),
           if (isSelected) Icon(Icons.check, color: color, size: 24),
@@ -149,7 +150,39 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
           const SizedBox(height: 24),
           _buildAttachmentsSection(),
           const SizedBox(height: 24),
-          Row(children: [Expanded(child: _buildInfoCard(title: "TIPO", value: _formatType(_issue!.type), icon: _getIconDataForType(_issue!.type), accentColor: _getTypeColor(_issue!.type))), const SizedBox(width: 12), Expanded(child: _buildInfoCard(title: "ETICHETTA", value: _issue!.tags.isNotEmpty ? _issue!.tags.first : "Nessuna", icon: Icons.label_outline, accentColor: _issue!.tags.isNotEmpty ? Colors.white : Colors.grey.shade700, isPlaceholder: _issue!.tags.isEmpty))]),
+
+          
+          // Box TIPO 
+          _buildTypeCard(
+            title: "TIPO", 
+            value: _formatType(_issue!.type), 
+            icon: _getIconDataForType(_issue!.type), 
+            color: _getTypeColor(_issue!.type)
+          ),
+          
+          const SizedBox(height: 24),
+
+          // Sezione ETICHETTE (Wrap)
+          const Text("ETICHETTE", style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+          const SizedBox(height: 10),
+          
+          if (_issue!.tags.isEmpty)
+            const Text("Nessuna etichetta", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic))
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _issue!.tags.map((tag) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2C),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade700)
+                ),
+                child: Text(tag, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              )).toList(),
+            ),
+
           const SizedBox(height: 32),
           const Text("Commenti", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
@@ -157,49 +190,41 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
           ..._issue!.comments.map((c) => _buildCommentItem(c)),
           const SizedBox(height: 20),
         ])),
-        
-        // BARRA COMMENTI CHAT STYLE
         Container(padding: const EdgeInsets.fromLTRB(16, 12, 16, 30), decoration: const BoxDecoration(color: Color(0xFF121212), border: Border(top: BorderSide(color: Colors.white10, width: 1))), child: Row(children: [Expanded(child: Container(padding: const EdgeInsets.symmetric(horizontal: 16), decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(24)), child: TextField(controller: _commentController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(hintText: "Scrivi un commento...", hintStyle: TextStyle(color: Colors.grey), border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 12))))), const SizedBox(width: 12), GestureDetector(onTap: _sendComment, child: const CircleAvatar(backgroundColor: Colors.blueAccent, radius: 22, child: Icon(Icons.arrow_upward, color: Colors.white, size: 24)))]))
       ]),
     );
   }
 
-  // --- WIDGET ALLEGATI (Lista Orizzontale) ---
-  Widget _buildAttachmentsSection() {
-    List<String> images = _parseImages(_issue!.imageUrl);
-    bool hasImages = images.isNotEmpty;
-    return Column(children: [
-      GestureDetector(onTap: hasImages ? () => setState(() => _isAttachmentsExpanded = !_isAttachmentsExpanded) : null, child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), decoration: BoxDecoration(color: const Color(0xFF1C1C1E), borderRadius: BorderRadius.circular(12)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("Allegati", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), Icon(_isAttachmentsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: hasImages ? Colors.white : Colors.grey.shade700)]))),
-      if(_isAttachmentsExpanded && hasImages) 
-        Container(margin: const EdgeInsets.only(top: 12), height: 100, child: ListView.builder(scrollDirection: Axis.horizontal, itemCount: images.length, itemBuilder: (context, index) { return GestureDetector(onTap: () => _openFullScreenImage(images[index]), child: Container(width: 100, margin: const EdgeInsets.only(right: 12), decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade800), image: DecorationImage(image: _getImageProvider(images[index]), fit: BoxFit.cover))));}))
-    ]); 
-  }
-
-  // --- COMMENTO ---
-  Widget _buildCommentItem(dynamic comment) {
-    bool isMyComment = false;
-    if (_currentUserId != null && comment.authorId != 0) isMyComment = (_currentUserId == comment.authorId);
-    else if (_currentUserEmail != null && comment.authorEmail != null) isMyComment = _currentUserEmail!.trim().toLowerCase() == comment.authorEmail!.trim().toLowerCase();
-
+  Widget _buildTypeCard({required String title, required String value, required IconData icon, required Color color}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1C1C1E), borderRadius: BorderRadius.circular(12)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Row(children: [CircleAvatar(backgroundColor: Colors.grey.shade700, radius: 14, child: Text(comment.authorEmail.isNotEmpty ? comment.authorEmail[0].toUpperCase() : "?", style: const TextStyle(color: Colors.white, fontSize: 12))), const SizedBox(width: 10), Text(comment.authorEmail, style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, fontSize: 13))]),
-          if (isMyComment) IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22), onPressed: () => _deleteComment(comment.id), padding: EdgeInsets.zero, constraints: const BoxConstraints())
-        ]),
-        const SizedBox(height: 8), Padding(padding: const EdgeInsets.only(left: 38.0), child: Text(comment.content, style: const TextStyle(color: Colors.white, fontSize: 15)))
-      ]),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E), 
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5), 
+      ),
+      child: Column(
+        children: [
+          Text(title, style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 22), 
+              const SizedBox(width: 8),
+              Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 18)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  // --- INFO CARD ---
-  Widget _buildInfoCard({required String title, required String value, required IconData icon, required Color accentColor, bool isPlaceholder = false}) { return Container(padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16), decoration: BoxDecoration(color: const Color(0xFF1C1C1E), borderRadius: BorderRadius.circular(16), border: Border.all(color: isPlaceholder ? Colors.white10 : accentColor.withValues(alpha: 0.3), width: 1.5)), child: Column(children: [Text(title, style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5)), const SizedBox(height: 10), Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(isPlaceholder?Icons.label_off_outlined:icon, color: isPlaceholder?Colors.grey.shade600:accentColor, size: isPlaceholder?20:22), const SizedBox(width: 8), Flexible(child: Text(value, style: TextStyle(color: isPlaceholder?Colors.grey.shade600:accentColor, fontWeight: isPlaceholder?FontWeight.w500:FontWeight.w900, fontSize: isPlaceholder?16:18, fontStyle: isPlaceholder?FontStyle.italic:FontStyle.normal), overflow: TextOverflow.ellipsis))])])); }
-  
+  Widget _buildAttachmentsSection() { List<String> images = _parseImages(_issue!.imageUrl); bool hasImages = images.isNotEmpty; return Column(children: [GestureDetector(onTap: hasImages ? () => setState(() => _isAttachmentsExpanded = !_isAttachmentsExpanded) : null, child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), decoration: BoxDecoration(color: const Color(0xFF1C1C1E), borderRadius: BorderRadius.circular(12)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("Allegati", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), Icon(_isAttachmentsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: hasImages ? Colors.white : Colors.grey.shade700)]))), if(_isAttachmentsExpanded && hasImages) Container(margin: const EdgeInsets.only(top: 12), height: 100, child: ListView.builder(scrollDirection: Axis.horizontal, itemCount: images.length, itemBuilder: (context, index) { return GestureDetector(onTap: () => _openFullScreenImage(images[index]), child: Container(width: 100, margin: const EdgeInsets.only(right: 12), decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade800), image: DecorationImage(image: _getImageProvider(images[index]), fit: BoxFit.cover))));}))]); }
+  Widget _buildCommentItem(dynamic c) { bool isMy = (_currentUserId != null && _currentUserId == c.authorId) || (_currentUserEmail != null && c.authorEmail != null && _currentUserEmail!.trim().toLowerCase() == c.authorEmail!.trim().toLowerCase()); return Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1C1C1E), borderRadius: BorderRadius.circular(12)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Row(children: [CircleAvatar(backgroundColor: Colors.grey.shade700, radius: 14, child: Text(c.authorEmail.isNotEmpty ? c.authorEmail[0].toUpperCase() : "?", style: const TextStyle(color: Colors.white, fontSize: 12))), const SizedBox(width: 10), Text(c.authorEmail, style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, fontSize: 13))]), if (isMy) IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22), onPressed: () => _deleteComment(c.id), padding: EdgeInsets.zero, constraints: const BoxConstraints())]), const SizedBox(height: 8), Padding(padding: const EdgeInsets.only(left: 38.0), child: Text(c.content, style: const TextStyle(color: Colors.white, fontSize: 15))) ])); }
   Widget _buildStatusPill(String s) { String t=s=="IN_PROGRESS"?"In corso":s=="DONE"?"Completata":"To do"; return Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(8)), child: Text(t, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))); }
-  
-  Widget _buildPriorityPill(String? p) { if(p==null)return const SizedBox(); String t=p.replaceAll('_',' ').toLowerCase().split(' ').map((w)=>w.isNotEmpty?'${w[0].toUpperCase()}${w.substring(1)}':'').join(' '); Color c; IconData i; if(p.toUpperCase().contains('VERY HIGH')){c=const Color(0xFFE53935);i=Icons.keyboard_double_arrow_up;}else if(p.toUpperCase().contains('HIGH')){c=const Color(0xFFFF5252);i=Icons.keyboard_arrow_up;}else if(p.toUpperCase().contains('MEDIUM')){c=const Color(0xFFFF9800);i=Icons.drag_handle;}else if(p.toUpperCase().contains('VERY LOW')){c=const Color(0xFF64B5F6);i=Icons.keyboard_double_arrow_down;}else if(p.toUpperCase().contains('LOW')){c=const Color(0xFF2196F3);i=Icons.keyboard_arrow_down;}else{c=Colors.grey;i=Icons.help;} return Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(20), border: Border.all(color: c.withValues(alpha: 0.5), width: 1)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(i, color: c, size: 16), const SizedBox(width: 6), Text(t, style: TextStyle(color: c, fontWeight: FontWeight.bold))])); }
-  
+  Widget _buildPriorityPill(String? p) { if(p==null)return const SizedBox(); String t=p.replaceAll('_',' ').toLowerCase().split(' ').map((w)=>w.isNotEmpty?'${w[0].toUpperCase()}${w.substring(1)}':'').join(' '); Color c=Colors.grey; IconData i=Icons.help; if(p.toUpperCase().contains('VERY HIGH')){c=const Color(0xFFE53935);i=Icons.keyboard_double_arrow_up;}else if(p.toUpperCase().contains('HIGH')){c=const Color(0xFFFF5252);i=Icons.keyboard_arrow_up;}else if(p.toUpperCase().contains('MEDIUM')){c=const Color(0xFFFF9800);i=Icons.drag_handle;}else if(p.toUpperCase().contains('VERY LOW')){c=const Color(0xFF64B5F6);i=Icons.keyboard_double_arrow_down;}else if(p.toUpperCase().contains('LOW')){c=const Color(0xFF2196F3);i=Icons.keyboard_arrow_down;} return Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(20), border: Border.all(color: c.withOpacity(0.5), width: 1)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(i, color: c, size: 16), const SizedBox(width: 6), Text(t, style: TextStyle(color: c, fontWeight: FontWeight.bold))])); }
   String _formatType(String type) => type[0] + type.substring(1).toLowerCase();
   Color _getTypeColor(String type) { switch (type) { case 'BUG': return Colors.red; case 'FEATURE': return Colors.blue; case 'QUESTION': return Colors.orange; default: return Colors.white; } }
   IconData _getIconDataForType(String type) { switch (type) { case 'BUG': return Icons.bug_report_outlined; case 'FEATURE': return Icons.check_box_outlined; case 'QUESTION': return Icons.help_outline; default: return Icons.description_outlined; } }

@@ -24,7 +24,7 @@ const Issue = database.define('Issue', {
     allowNull: true,
   },
   status: {
-    type: DataTypes.ENUM('TODO', 'IN_PROGRESS', 'DONE'),
+    type: DataTypes.ENUM('TODO', 'IN_CORSO', 'COMPLETATA'),
     allowNull: false,
     defaultValue: 'TODO',
   },
