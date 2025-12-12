@@ -15,8 +15,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final IssueService _issueService = IssueService();
   
-  List<Issue> _allIssues = [];      
-  List<Issue> _filteredIssues = []; 
+  List<Issue> _issues = [];      
   bool _isLoading = true;
   String _errorMessage = "";
 
@@ -38,10 +37,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _loadIssues() async {
     setState(() => _isLoading = true);
     try {
-      final issues = await _issueService.getIssues();
+      // Converti le priorità (es. VERY_HIGH -> VERY HIGH) per il backend
+      List<String> prioritiesToSend = _selectedPriorities.map((p) => p.replaceAll('_', ' ')).toList();
+
+      final issues = await _issueService.getIssues(
+        search: _searchQuery,
+        types: _selectedTypes.toList(),
+        statuses: _selectedStatuses.toList(),
+        priorities: prioritiesToSend,
+        tags: _selectedLabels.toList(),
+      );
+
       setState(() {
-        _allIssues = issues;
-        _applyFilters(); 
+        _issues = issues;
         _isLoading = false;
       });
     } catch (e) {
@@ -50,32 +58,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  void _applyFilters() {
-    setState(() {
-      _filteredIssues = _allIssues.where((issue) {
-        if (_searchQuery.isNotEmpty) {
-          final q = _searchQuery.toLowerCase();
-          if (!issue.title.toLowerCase().contains(q) && 
-              !issue.description.toLowerCase().contains(q)) return false;
-        }
-        if (_selectedTypes.isNotEmpty && !_selectedTypes.contains(issue.type)) return false;
-        if (_selectedStatuses.isNotEmpty && !_selectedStatuses.contains(issue.status)) return false;
-        
-        if (_selectedPriorities.isNotEmpty) {
-           String normPriority = issue.priority?.toUpperCase().replaceAll(' ', '_') ?? "";
-           Set<String> normFilters = _selectedPriorities.map((p) => p.toUpperCase().replaceAll(' ', '_')).toSet();
-           if (!normFilters.contains(normPriority)) return false;
-        }
-        
-        if (_selectedLabels.isNotEmpty) {
-          bool hasMatch = issue.tags.any((tag) => _selectedLabels.contains(tag));
-          if (!hasMatch) return false;
-        }
-        return true;
-      }).toList();
-    });
   }
 
   Widget _buildFilterChip(String label, Set<String> selectedValues, Function(Set<String>) onUpdate) {
@@ -234,7 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboardContent() {
-    final Set<String> existingTags = _allIssues.expand((i) => i.tags).where((t) => t.trim().isNotEmpty).toSet();
+    final Set<String> existingTags = _issues.expand((i) => i.tags).where((t) => t.trim().isNotEmpty).toSet();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -243,7 +225,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           TextField(
             style: const TextStyle(color: Colors.white),
-            onChanged: (val) { _searchQuery = val; _applyFilters(); },
+            onChanged: (val) { _searchQuery = val; _loadIssues(); },
             decoration: InputDecoration(
               hintText: 'Search',
               hintStyle: const TextStyle(color: Colors.grey),
@@ -259,24 +241,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () => _showMultiSelectSheet("il Tipo", ['BUG', 'FEATURE', 'QUESTION', 'DOCUMENTATION'], _selectedTypes, (val) { setState(() { _selectedTypes = val; _applyFilters(); }); }),
+                  onTap: () => _showMultiSelectSheet("il Tipo", ['BUG', 'FEATURE', 'QUESTION', 'DOCUMENTATION'], _selectedTypes, (val) { setState(() { _selectedTypes = val; }); _loadIssues(); }),
                   child: AbsorbPointer(child: _buildFilterChip("Tipo", _selectedTypes, (_) {})),
                 ),
                 const SizedBox(width: 8),
                 // FIX: Qui usiamo i valori ITALIANI del DB nel filtro
                 GestureDetector(
-                  onTap: () => _showMultiSelectSheet("lo Stato", ['TODO', 'IN_CORSO', 'COMPLETATA'], _selectedStatuses, (val) { setState(() { _selectedStatuses = val; _applyFilters(); }); }),
+                  onTap: () => _showMultiSelectSheet("lo Stato", ['TODO', 'IN_CORSO', 'COMPLETATA'], _selectedStatuses, (val) { setState(() { _selectedStatuses = val; }); _loadIssues(); }),
                   child: AbsorbPointer(child: _buildFilterChip("Stato", _selectedStatuses, (_) {})),
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
-                  onTap: () => _showMultiSelectSheet("la Priorità", ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'], _selectedPriorities, (val) { setState(() { _selectedPriorities = val; _applyFilters(); }); }),
+                  onTap: () => _showMultiSelectSheet("la Priorità", ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'], _selectedPriorities, (val) { setState(() { _selectedPriorities = val; }); _loadIssues(); }),
                   child: AbsorbPointer(child: _buildFilterChip("Priorità", _selectedPriorities, (_) {})),
                 ),
                 const SizedBox(width: 8),
                 if (existingTags.isNotEmpty)
                   GestureDetector(
-                    onTap: () => _showMultiSelectSheet("l'Etichetta", existingTags.toList(), _selectedLabels, (val) { setState(() { _selectedLabels = val; _applyFilters(); }); }),
+                    onTap: () => _showMultiSelectSheet("l'Etichetta", existingTags.toList(), _selectedLabels, (val) { setState(() { _selectedLabels = val; }); _loadIssues(); }),
                     child: AbsorbPointer(child: _buildFilterChip("Etichetta", _selectedLabels, (_) {})),
                   ),
               ],
@@ -287,7 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
-          else if (_filteredIssues.isEmpty)
+          else if (_issues.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.only(top: 50),
@@ -306,10 +288,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _filteredIssues.length,
+                itemCount: _issues.length,
                 separatorBuilder: (_, __) => const Divider(color: Colors.grey, height: 1, indent: 60),
                 itemBuilder: (context, index) {
-                  final issue = _filteredIssues[index];
+                  final issue = _issues[index];
                   return ListTile(
                     onTap: () async {
                       await Navigator.push(

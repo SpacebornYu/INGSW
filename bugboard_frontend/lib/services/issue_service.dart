@@ -6,12 +6,26 @@ import '../models/issue.dart';
 class IssueService {
   static const String baseUrl = 'http://localhost:3000'; 
 
-  // GET LISTA
-  Future<List<Issue>> getIssues() async {
-    final url = Uri.parse('$baseUrl/issues');
+  // GET LISTA (Server-Side Filtering)
+  Future<List<Issue>> getIssues({
+    String? search,
+    List<String>? types,
+    List<String>? statuses,
+    List<String>? priorities,
+    List<String>? tags,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     if (token == null) throw Exception("Token non trovato");
+
+    Map<String, dynamic> queryParams = {};
+    if (search != null && search.isNotEmpty) queryParams['search'] = search;
+    if (types != null && types.isNotEmpty) queryParams['type'] = types;
+    if (statuses != null && statuses.isNotEmpty) queryParams['status'] = statuses;
+    if (priorities != null && priorities.isNotEmpty) queryParams['priority'] = priorities;
+    if (tags != null && tags.isNotEmpty) queryParams['tag'] = tags;
+
+    final url = Uri.parse('$  /issues').replace(queryParameters: queryParams);
 
     try {
       final response = await http.get(
