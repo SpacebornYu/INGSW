@@ -3,13 +3,13 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  // Usa localhost per Chrome e iOS Simulator
-  // Usa 10.0.2.2 per Android Emulator
-  static const String baseUrl = 'http://localhost:3000'; 
+  // Usare localhost per Chrome e iOS Simulator
+  // Usare 10.0.2.2 per Android Emulator
+  static const String baseUrl = 'http://localhost:3000';
 
   // --- LOGIN ---
   Future<bool> login(String email, String password) async {
-    final url = Uri.parse('$baseUrl/auth/login'); 
+    final url = Uri.parse('$baseUrl/auth/login');
     try {
       final response = await http.post(
         url,
@@ -20,16 +20,13 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final prefs = await SharedPreferences.getInstance();
-        
         await prefs.setString('token', data['token']);
         await prefs.setString('email', data['user']['email']);
         await prefs.setString('role', data['user']['role']);
-        
-        // SALVIAMO L'ID UTENTE (Fondamentale per cancellare i commenti)
+        // SALVA L'ID UTENTE (serve per cancellare i commenti)
         if (data['user']['id'] != null) {
           await prefs.setInt('userId', data['user']['id']);
         }
-        
         return true;
       }
       print("Login fallito: ${response.body}");
@@ -40,11 +37,9 @@ class AuthService {
     }
   }
 
-  // --- REGISTRAZIONE NUOVO UTENTE (Solo Admin) ---
+  //REGISTRAZIONE NUOVO UTENTE (Solo per gli Admin)
   Future<String?> registerUser(String email, String password, String role) async {
-    // Rotta combinata corretta
-    final url = Uri.parse('$baseUrl/users/admin/users'); 
-    
+    final url = Uri.parse('$baseUrl/users/admin/users');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -61,9 +56,8 @@ class AuthService {
           'role': role,
         }),
       );
-      
       if (response.statusCode == 201) {
-        return null; // Successo
+        return null;
       } else {
         try {
           final body = jsonDecode(response.body);
@@ -77,7 +71,7 @@ class AuthService {
     }
   }
 
-  // --- LOGOUT ---
+  //LOGOUT
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();

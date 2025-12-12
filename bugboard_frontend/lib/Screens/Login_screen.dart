@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'dashboard_screen.dart'; // FONDAMENTALE: Importa la dashboard
+import 'dashboard_screen.dart'; //Importa la dashboard
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -73,25 +73,24 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               // ICONA CIRCOLARE
               Container(
-                width: 140, 
-                height: 140, 
+                width: 140,
+                height: 140,
                 decoration: const BoxDecoration(
-                  shape: BoxShape.circle, 
-                  color: Colors.white10, 
+                  shape: BoxShape.circle,
+                  color: Colors.white10,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(10.0), 
-                  child: ClipOval( 
+                  padding: const EdgeInsets.all(10.0),
+                  child: ClipOval(
                     child: Image.asset(
-                      'assets/images/app_logo.png', 
-                      fit: BoxFit.cover, 
-                      // Aggiungiamo un gestore errori nel caso l'immagine non ci sia
+                      'assets/images/app_logo.png',
+                      fit: BoxFit.cover,
+                      // Qui un gestore di errori nel caso in cui non ci sia l'immagine
                       errorBuilder: (context, error, stackTrace) => const Icon(Icons.bug_report, size: 70, color: Colors.white),
                     ),
                   ),
                 ),
               ),
-              
               const SizedBox(height: 30),
               const Text(
                 'Accedi a BugBoard26',
@@ -102,7 +101,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              
               _buildInputField(
                 controller: _emailController,
                 label: 'Email',
@@ -117,7 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: true,
               ),
               const SizedBox(height: 30),
-              
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

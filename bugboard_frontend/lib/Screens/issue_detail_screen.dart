@@ -17,7 +17,6 @@ class IssueDetailScreen extends StatefulWidget {
 class _IssueDetailScreenState extends State<IssueDetailScreen> {
   final IssueService _issueService = IssueService();
   final TextEditingController _commentController = TextEditingController();
-  
   Issue? _issue;
   bool _isLoading = true;
   int? _currentUserId;
@@ -35,7 +34,6 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     final userId = await _issueService.getCurrentUserId();
     final userEmail = await _issueService.getCurrentUserEmail();
     final issue = await _issueService.getIssueDetails(widget.issueId);
-    
     if (mounted) {
       setState(() {
         _currentUserId = userId;
@@ -151,21 +149,18 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
           _buildAttachmentsSection(),
           const SizedBox(height: 24),
 
-          
-          // Box TIPO 
+          // Box TIPO
           _buildTypeCard(
-            title: "TIPO", 
-            value: _formatType(_issue!.type), 
-            icon: _getIconDataForType(_issue!.type), 
+            title: "TIPO",
+            value: _formatType(_issue!.type),
+            icon: _getIconDataForType(_issue!.type),
             color: _getTypeColor(_issue!.type)
           ),
-          
           const SizedBox(height: 24),
 
-          // Sezione ETICHETTE (Wrap)
+          // Sezione ETICHETTE
           const Text("ETICHETTE", style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
           const SizedBox(height: 10),
-          
           if (_issue!.tags.isEmpty)
             const Text("Nessuna etichetta", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic))
           else
@@ -200,9 +195,9 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E), 
+        color: const Color(0xFF1C1C1E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5), 
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
       child: Column(
         children: [
@@ -211,7 +206,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 22), 
+              Icon(icon, color: color, size: 22),
               const SizedBox(width: 8),
               Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 18)),
             ],
