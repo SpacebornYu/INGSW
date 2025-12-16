@@ -60,11 +60,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-<<<<<<< HEAD
-=======
-  void _applyFilters() {
-    setState(() {
-      _filteredIssues = _allIssues.where((issue) {
+  Widget _buildFilterChip(String label, Set<String> selectedValues, Function(Set<String>) onUpdate) {
+    bool isActive = selectedValues.isNotEmpty;
+    String buttonText = label;
+    if (isActive) {
+      if (selectedValues.length == 1) {
         buttonText = _formatLabel(selectedValues.first);
       } else {
         buttonText = "$label (+${selectedValues.length})";

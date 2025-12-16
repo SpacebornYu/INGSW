@@ -1,4 +1,4 @@
-import { database } from './database.js';
+import { database } from './Database.js';
 import User from './User.js';
 import Issue from './Issue.js';
 import Comment from './Comment.js';

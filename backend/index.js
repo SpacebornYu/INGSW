@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { connectDatabase } from "./models/database.js";
+import { connectDatabase } from "./models/Database.js";
 import { ensureDefaultAdmin } from "./services/initAdmin.js";
 
 // Import routes
