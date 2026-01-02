@@ -110,27 +110,25 @@ class IssueService {
     else if (priority == 'Low') formattedPriority = 'LOW';
     else if (priority == 'Very Low') formattedPriority = 'VERY LOW';
 
-    Map<String, dynamic> bodyMap = {
-      'title': title,
-      'description': description,
-      'type': type.toUpperCase(),
-      'priority': formattedPriority,
-      'tags': labels,
-    };
+    var request = http.MultipartRequest('POST', url);
+    request.headers['Authorization'] = 'Bearer $token';
+    
+    request.fields['title'] = title;
+    request.fields['description'] = description;
+    request.fields['type'] = type.toUpperCase();
+    request.fields['priority'] = formattedPriority;
+    
+    if (labels.isNotEmpty) {
+      request.fields['tags'] = jsonEncode(labels);
+    }
 
-    if (imagePaths.isNotEmpty) {
-      bodyMap['imageUrl'] = jsonEncode(imagePaths);
+    for (var path in imagePaths) {
+      request.files.add(await http.MultipartFile.fromPath('images', path));
     }
 
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(bodyMap),
-      );
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode != 201) {
         print("ERRORE CREAZIONE (${response.statusCode}): ${response.body}");

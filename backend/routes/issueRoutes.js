@@ -7,10 +7,11 @@ import {
   updateIssue
 } from '../controllers/issueController.js';
 import { auth } from '../middleware/auth.js';
+import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
-router.post('/', auth, createIssue);
+router.post('/', auth, upload.array('images', 5), createIssue);
 router.get('/', auth, getIssues);
 router.get('/:id', auth, getIssueById);
 router.patch('/:id', auth, updateIssue);

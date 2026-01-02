@@ -10,8 +10,16 @@ import Comment from '../models/Comment.js';
 
 export async function createIssue(req, res) {
   try {
-    // MODIFICA 1: Aggiungi 'imageUrl' nella lista delle cose da leggere
-    const { title, description, type, priority, tags, imageUrl } = req.body;
+    let { title, description, type, priority, tags } = req.body;
+    
+    // Handle images
+    let imageUrl = null;
+    if (req.files && req.files.length > 0) {
+        const urls = req.files.map(f => f.path);
+        imageUrl = JSON.stringify(urls);
+    } else if (req.file) {
+        imageUrl = JSON.stringify([req.file.path]);
+    }
 
     if (!title || !description || !type) {
       return res.status(400).json({ error: 'Titolo, descrizione e tipo sono obbligatori' });
@@ -29,11 +37,18 @@ export async function createIssue(req, res) {
       priority: priority || null,
       status: 'TODO',
       creatorId: req.user.id,
-      // MODIFICA 2: Salva l'URL nel database (o null se non c'è)
-      imageUrl: imageUrl || null,
+      imageUrl: imageUrl,
     });
 
     // Gestione tag
+    if (typeof tags === 'string') {
+        try {
+            tags = JSON.parse(tags);
+        } catch (e) {
+            tags = [tags];
+        }
+    }
+
     if (tags && Array.isArray(tags) && tags.length > 0) {
       const tagInstances = await Promise.all(
         tags.map(tagName => 
