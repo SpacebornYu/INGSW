@@ -19,8 +19,32 @@ Ogni unità di test segue il pattern architetturale \textbf{AAA (Arrange, Act, A
     \item \textbf{Verifica (Assert):} Controllo puntuale che la risposta HTTP e le interazioni con i mock rispettino le specifiche.
 \end{itemize}
 
-\section{Analisi dei Casi di Test}
-Di seguito vengono dettagliate le strategie di verifica per quattro funzionalità critiche del sistema, selezionate per la loro complessità logica.
+\subsection{Criteri di Copertura}
+Per la validazione dei metodi selezionati, è stato adottato un criterio di **Statement Coverage** (copertura delle istruzioni), con l'obiettivo di esercitare tutti i rami decisionali principali (successo, errore di validazione, errore di autenticazione). L'uso del mocking ha permesso di raggiungere anche i rami di gestione degli errori (es. eccezioni del database) difficilmente riproducibili in un ambiente di test integrato.
+
+\section{Piano di Test: Gestione delle Segnalazioni}
+In ottemperanza alle specifiche di progetto, è stato definito un piano di test funzionale focalizzato sulla funzionalità \textit{core} del sistema: la **Gestione delle Segnalazioni (Issue Management)**.
+La scelta è ricaduta su questo modulo in quanto rappresenta il cuore pulsante della piattaforma BugBoard e presenta la maggiore complessità logica, coinvolgendo validazione degli input, gestione delle relazioni (Utenti, Tag) e filtri di ricerca avanzati.
+
+\subsection{Obiettivi del Test}
+L'attività di verifica si prefigge i seguenti obiettivi primari:
+\begin{itemize}
+    \item \textbf{Robustezza agli Input:} Garantire che il sistema rifiuti dati incompleti, malformati o che violano i vincoli di dominio (es. priorità non ammesse, testi che superano i limiti di lunghezza).
+    \item \textbf{Integrità dei Dati:} Verificare che le segnalazioni valide vengano persistite correttamente nel database con tutte le relazioni associate (autore, tag).
+    \item \textbf{Correttezza della Ricerca:} Assicurare che i meccanismi di filtraggio e ricerca testuale restituiscano esattamente il sottoinsieme di dati richiesto, ignorando parametri non validi.
+\end{itemize}
+
+\subsection{Criteri di Accettazione}
+Un caso di test è considerato "Superato" (Passed) esclusivamente se soddisfa tutte le seguenti condizioni:
+\begin{enumerate}
+    \item Il codice di stato HTTP restituito corrisponde all'atteso (es. \texttt{201 Created} per inserimenti, \texttt{400 Bad Request} per errori di validazione).
+    \item Il corpo della risposta (JSON) contiene i dati previsti o un messaggio di errore esplicativo.
+    \item Le funzioni mockate del database (es. \texttt{Issue.create}) sono state invocate con i parametri corretti.
+    \item Non vengono sollevate eccezioni non gestite (Internal Server Error 500) a fronte di input errati.
+\end{enumerate}
+
+\section{Strategie di Progettazione dei Test (Analisi dei Casi)}
+Di seguito vengono dettagliate le strategie di verifica adottate per i quattro metodi non banali oggetto di test automatico. Per ciascuno sono state individuate le Classi di Equivalenza degli input e definiti i casi di test necessari per coprire gli scenari significativi.
 
 \subsection{Creazione Segnalazione (\texttt{createIssue})}
 Il metodo \texttt{createIssue} è responsabile dell'orchestrazione del processo di inserimento, che include la validazione sintattica degli input e la gestione delle relazioni (es. tag).
@@ -125,6 +149,153 @@ Sono state identificate le seguenti classi di equivalenza per i parametri di inp
     \item \textbf{Caso 1 (CE2, -):} Tentativo di registrazione con email duplicata $\rightarrow$ Errore (Status 400).
     \item \textbf{Caso 2 (CE1, CE1):} Nuova email e ruolo valido $\rightarrow$ Creazione riuscita con hashing della password (Status 201).
 \end{itemize}
+
+\section{Implementazione dei Test Unitari}
+In questa sezione viene riportato il codice sorgente dei test unitari sviluppati per i quattro metodi non banali selezionati: \texttt{createIssue}, \texttt{getIssues}, \texttt{login} e \texttt{createUser}.
+I test sono stati realizzati utilizzando il framework **Jest** e fanno uso intensivo del mocking per isolare la logica di business dalle dipendenze esterne (Database, servizi di crittografia).
+
+\subsection{Test IssueController (createIssue, getIssues)}
+\begin{verbatim}
+import { jest } from '@jest/globals';
+
+// Mock dependencies
+const mockIssue = {
+  create: jest.fn(),
+  findByPk: jest.fn(),
+  findAll: jest.fn(),
+};
+const mockUser = {};
+const mockTag = { findOrCreate: jest.fn() };
+const mockComment = {};
+
+jest.unstable_mockModule('../../models/Issue.js', () => ({ default: mockIssue }));
+jest.unstable_mockModule('../../models/User.js', () => ({ default: mockUser }));
+jest.unstable_mockModule('../../models/Tag.js', () => ({ default: mockTag }));
+jest.unstable_mockModule('../../models/Comment.js', () => ({ default: mockComment }));
+jest.unstable_mockModule('sequelize', () => ({
+  Op: { or: Symbol('or'), iLike: Symbol('iLike') }
+}));
+
+const { createIssue, getIssues } = await import('../../controllers/issueController.js');
+
+describe('Issue Controller', () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = { body: {}, user: { id: 1 }, file: null, files: [] };
+    res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    jest.clearAllMocks();
+  });
+
+  describe('createIssue', () => {
+    it('should return 400 if title is missing', async () => {
+      req.body = { description: 'desc', type: 'BUG' };
+      await createIssue(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should create an issue successfully', async () => {
+      req.body = { title: 'Title', description: 'Desc', type: 'BUG', priority: 'HIGH' };
+      const mockCreatedIssue = { id: 1, addTags: jest.fn() };
+      mockIssue.create.mockResolvedValue(mockCreatedIssue);
+      mockIssue.findByPk.mockResolvedValue(mockCreatedIssue);
+
+      await createIssue(req, res);
+
+      expect(mockIssue.create).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Title', priority: 'HIGH'
+      }));
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+  });
+
+  describe('getIssues', () => {
+    it('should filter by status', async () => {
+      req.query = { status: 'TODO' };
+      mockIssue.findAll.mockResolvedValue([]);
+      await getIssues(req, res);
+      expect(mockIssue.findAll).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ status: 'TODO' })
+      }));
+    });
+  });
+});
+\end{verbatim}
+
+\subsection{Test AuthController (login)}
+\begin{verbatim}
+import { jest } from '@jest/globals';
+
+const mockUser = { findOne: jest.fn() };
+jest.unstable_mockModule('../../models/User.js', () => ({ default: mockUser }));
+jest.unstable_mockModule('bcrypt', () => ({ default: { compare: jest.fn() } }));
+jest.unstable_mockModule('jsonwebtoken', () => ({ default: { sign: jest.fn() } }));
+
+const { login } = await import('../../controllers/authController.js');
+const bcrypt = (await import('bcrypt')).default;
+
+describe('Auth Controller', () => {
+  let req, res;
+  beforeEach(() => {
+    req = { body: {} };
+    res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    jest.clearAllMocks();
+  });
+
+  describe('login', () => {
+    it('should return 401 if user not found', async () => {
+      req.body = { email: 'test@test.com', password: 'password' };
+      mockUser.findOne.mockResolvedValue(null);
+      await login(req, res);
+      expect(res.status).toHaveBeenCalledWith(401);
+    });
+
+    it('should return token on success', async () => {
+      req.body = { email: 'test@test.com', password: 'password' };
+      mockUser.findOne.mockResolvedValue({ id: 1, passwordHash: 'hash' });
+      bcrypt.compare.mockResolvedValue(true);
+      await login(req, res);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'token' }));
+    });
+  });
+});
+\end{verbatim}
+
+\subsection{Test UserController (createUser)}
+\begin{verbatim}
+import { jest } from '@jest/globals';
+
+const mockUser = { findOne: jest.fn(), create: jest.fn() };
+jest.unstable_mockModule('../../models/User.js', () => ({ default: mockUser }));
+jest.unstable_mockModule('bcrypt', () => ({ default: { hash: jest.fn() } }));
+
+const { createUser } = await import('../../controllers/userController.js');
+
+describe('User Controller', () => {
+  let req, res;
+  beforeEach(() => {
+    req = { body: {} };
+    res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+  });
+
+  describe('createUser', () => {
+    it('should return 400 if email already exists', async () => {
+      req.body = { email: 'test@test.com', password: 'password' };
+      mockUser.findOne.mockResolvedValue({ id: 1 });
+      await createUser(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should create user successfully', async () => {
+      req.body = { email: 'new@test.com', password: 'password', role: 'USER' };
+      mockUser.findOne.mockResolvedValue(null);
+      mockUser.create.mockResolvedValue({ id: 1 });
+      await createUser(req, res);
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+  });
+});
+\end{verbatim}
 
 \section{Valutazione dell'Usabilità}
 La valutazione dell'usabilità della piattaforma BugBoard è stata strutturata su due livelli di indagine complementari: una revisione esperta (Expert Review) basata su euristiche consolidate e una campagna di test empirici con utenti reali.
