@@ -27,6 +27,15 @@ app.use('/users', userRoutes);
 app.use('/issues', issueRoutes);
 app.use('/', commentRoutes);
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global Error Handler:', err);
+  if (err.name === 'MulterError') {
+      return res.status(400).json({ error: err.message, code: err.code });
+  }
+  res.status(500).json({ error: err.message || 'Something went wrong', details: err });
+});
+
 // Connessione al database e avvio server
 const startServer = async () => {
   try {
