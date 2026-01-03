@@ -119,15 +119,14 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
     if (!confirm) return;
 
     setState(() => _isLoading = true);
-    List<String> imagePathsToSend = _selectedImages.map((img) => img.path).toList();
-
+    
     bool success = await _issueService.createIssue(
       _titleController.text,
       _descController.text,
       _selectedType!,
       _selectedPriority!,
       _tags, // Inviamo la lista di tag
-      imagePathsToSend
+      _selectedImages
     );
     setState(() => _isLoading = false);
 
@@ -186,7 +185,13 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(onPressed: _onClean, child: const Text("Pulisci", style: TextStyle(color: Colors.blue, fontSize: 16))),
-                const Text("Nuova Issue", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const Flexible(
+                  child: Text(
+                    "Nuova Issue", 
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 TextButton(
                   onPressed: _isValid && !_isLoading ? _onSubmit : null,
                   child: _isLoading

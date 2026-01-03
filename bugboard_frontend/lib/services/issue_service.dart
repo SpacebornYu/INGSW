@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/issue.dart';
 
@@ -98,7 +99,7 @@ class IssueService {
   }
 
   //CREA ISSUE
-  Future<bool> createIssue(String title, String description, String type, String priority, List<String> labels, List<String> imagePaths) async {
+  Future<bool> createIssue(String title, String description, String type, String priority, List<String> labels, List<XFile> images) async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -122,12 +123,17 @@ class IssueService {
       request.fields['tags'] = jsonEncode(labels);
     }
 
-    for (var path in imagePaths) {
-      request.files.add(await http.MultipartFile.fromPath('images', path));
+    for (var image in images) {
+      final bytes = await image.readAsBytes();
+      request.files.add(http.MultipartFile.fromBytes(
+        'images', 
+        bytes,
+        filename: image.name
+      ));
     }
 
     try {
-      final streamedResponse = await request.send();
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode != 201) {
