@@ -65,6 +65,13 @@ export async function createIssue(req, res) {
     }
 
     if (tags && Array.isArray(tags) && tags.length > 0) {
+      // Validazione lunghezza tag
+      for (const tag of tags) {
+        if (tag.length > 50) {
+          return res.status(400).json({ error: `Il tag "${tag}" supera i 50 caratteri` });
+        }
+      }
+
       const tagInstances = await Promise.all(
         tags.map(tagName => 
           Tag.findOrCreate({ where: { name: tagName.trim() } })
@@ -191,7 +198,7 @@ export async function updateIssue(req, res) {
     }
     if (priority !== undefined) {
       // Aggiungi le nuove priorità alla lista di controllo:
-    if (priority && !['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH', 'URGENT'].includes(priority)) {
+    if (priority && !['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'].includes(priority)) {
   return res.status(400).json({ error: 'Priorità non valida' });
 }
       issue.priority = priority;
@@ -207,6 +214,13 @@ export async function updateIssue(req, res) {
 
     // Aggiorna tag se presenti
     if (tags && Array.isArray(tags)) {
+      // Validazione lunghezza tag
+      for (const tag of tags) {
+        if (tag.length > 50) {
+          return res.status(400).json({ error: `Il tag "${tag}" supera i 50 caratteri` });
+        }
+      }
+
       const tagInstances = await Promise.all(
         tags.map(tagName => 
           Tag.findOrCreate({ where: { name: tagName.trim() } })

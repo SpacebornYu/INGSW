@@ -35,6 +35,11 @@ export async function createUser(req, res) {
       return res.status(400).json({ error: 'Formato email non valido' });
     }
 
+    // Validazione password
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'La password deve contenere almeno 8 caratteri' });
+    }
+
     if (role && !['ADMIN', 'USER'].includes(role)) {
       return res.status(400).json({ error: 'Ruolo non valido' });
     }
