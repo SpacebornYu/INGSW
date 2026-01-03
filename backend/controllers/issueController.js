@@ -9,6 +9,7 @@ import Comment from '../models/Comment.js';
 // backend/controllers/issueController.js
 
 export async function createIssue(req, res) {
+  console.log('createIssue: Inizio controller');
   try {
     let { title, description, type, priority, tags } = req.body;
     
