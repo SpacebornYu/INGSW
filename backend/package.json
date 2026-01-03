@@ -2,10 +2,9 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
-  "start": "node index.js",
-  "dev": "nodemon index.js"
-},
+  "scripts": {  "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
   "type": "module",
   "author": "Francesco",
   "license": "ISC",
@@ -20,5 +19,8 @@
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
   }
 }

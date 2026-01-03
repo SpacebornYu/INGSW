@@ -1,0 +1,185 @@
+\chapter{Verifica e Validazione del Software}
+
+Nell'ambito del ciclo di vita del software BugBoard, la fase di Verifica e Validazione (V\&V) ha ricoperto un ruolo centrale per garantire la robustezza architetturale e la conformità ai requisiti funzionali. Questo capitolo illustra le metodologie operative adottate per la progettazione, l'esecuzione e la documentazione delle procedure di test, nonché le strategie impiegate per la valutazione dell'esperienza utente.
+
+L'approccio sistematico alla definizione dei casi di test, supportato dall'automazione delle verifiche unitarie, ha consentito un monitoraggio costante della qualità del codice, permettendo l'identificazione precoce di regressioni e anomalie logiche.
+
+Contestualmente, la validazione dell'interfaccia utente è stata affrontata mediante un protocollo ibrido che combina l'ispezione euristica da parte di esperti con sessioni sperimentali condotte su un campione di utenti target. Tale sinergia ha fornito metriche oggettive e riscontri qualitativi indispensabili per ottimizzare l'interazione uomo-macchina, assicurando un prodotto finale intuitivo ed efficiente per tutte le tipologie di attori coinvolti.
+
+\section{Metodologia di Testing}
+Per garantire la robustezza e l'affidabilità del backend, si è optato per una strategia di testing automatizzato basata su \textbf{Jest}, standard \textit{de facto} per l'ecosistema Node.js.
+
+La scelta di Jest è stata dettata dalla sua versatilità e dalla capacità di operare in isolamento totale. A differenza di approcci che richiedono un database attivo, la strategia adottata sfrutta il \textbf{mocking} delle dipendenze.
+In un'architettura basata su Express.js ed ES Modules, l'isolamento delle unità di test è ottenuto intercettando le importazioni dei moduli (tramite \texttt{unstable\_mockModule}). Questo permette di sostituire i modelli di Sequelize (\texttt{Issue}, \texttt{User}) e le librerie crittografiche con oggetti simulati, garantendo che ogni test verifichi esclusivamente la logica del controller senza effetti collaterali esterni.
+
+Ogni unità di test segue il pattern architetturale \textbf{AAA (Arrange, Act, Assert)}:
+\begin{itemize}
+    \item \textbf{Configurazione (Arrange):} Preparazione dello scenario, definizione dei mock e delle risposte simulate.
+    \item \textbf{Esecuzione (Act):} Invocazione del metodo del controller oggetto di verifica.
+    \item \textbf{Verifica (Assert):} Controllo puntuale che la risposta HTTP e le interazioni con i mock rispettino le specifiche.
+\end{itemize}
+
+\section{Analisi dei Casi di Test}
+Di seguito vengono dettagliate le strategie di verifica per quattro funzionalità critiche del sistema, selezionate per la loro complessità logica.
+
+\subsection{Creazione Segnalazione (\texttt{createIssue})}
+Il metodo \texttt{createIssue} è responsabile dell'orchestrazione del processo di inserimento, che include la validazione sintattica degli input e la gestione delle relazioni (es. tag).
+
+\subsubsection*{Classi di equivalenza}
+Sono state identificate le seguenti classi di equivalenza per i parametri di input (estratti dalla richiesta):
+\begin{itemize}
+    \item \textbf{title / description / type:}
+    \begin{itemize}
+        \item CE1 (Valida): Stringhe non vuote e tipo definito nell'enumerazione.
+        \item CE2 (Non valida): Stringhe vuote o nulle.
+    \end{itemize}
+    \item \textbf{priority:}
+    \begin{itemize}
+        \item CE1 (Valida): Valore appartenente all'insieme ammesso (es. HIGH, MEDIUM, LOW).
+        \item CE2 (Non valida): Valore non riconosciuto dal sistema.
+    \end{itemize}
+    \item \textbf{user:}
+    \begin{itemize}
+        \item CE1 (Valida): Utente autenticato nel sistema.
+        \item CE2 (Non valida): Utente non autenticato o token non valido.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection*{Strategia di Verifica (N-WECT)}
+Sono stati implementati scenari per coprire le combinazioni significative:
+\begin{itemize}
+    \item \textbf{Caso 1 (CE1, CE1, CE1):} Dati validi, priorità corretta e utente autenticato $\rightarrow$ Creazione riuscita (Status 201).
+    \item \textbf{Caso 2 (CE2, -, -):} Titolo o descrizione mancanti $\rightarrow$ Errore di validazione (Status 400).
+\end{itemize}
+
+\subsection{Ricerca e Filtraggio (\texttt{getIssues})}
+La verifica di questo metodo si concentra sulla capacità del sistema di tradurre parametri di query HTTP in clausole SQL complesse.
+
+\subsubsection*{Classi di equivalenza}
+Sono state identificate le seguenti classi di equivalenza per i parametri di filtro (estratti dalla richiesta):
+\begin{itemize}
+    \item \textbf{filters (status, priority):}
+    \begin{itemize}
+        \item CE1 (Valida): Filtro corrispondente a issue esistenti nel DB.
+        \item CE2 (Valida): Filtro che non produce risultati (insieme vuoto).
+    \end{itemize}
+    \item \textbf{search:}
+    \begin{itemize}
+        \item CE1 (Valida): Stringa alfanumerica per ricerca parziale.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection*{Strategia di Verifica}
+I test assicurano che la logica di costruzione della query sia corretta:
+\begin{itemize}
+    \item \textbf{Caso 1 (CE1):} Filtri presenti $\rightarrow$ La funzione mockata \texttt{findAll} riceve la clausola \texttt{where} corretta.
+    \item \textbf{Caso 2 (CE1 - Search):} Parametro di ricerca presente $\rightarrow$ Verifica dell'uso dell'operatore \texttt{Op.or} su titolo e descrizione.
+\end{itemize}
+
+\subsection{Autenticazione Utente (\texttt{login})}
+Il test del metodo di login è critico per la sicurezza, dovendo gestire diverse permutazioni di credenziali errate senza esporre informazioni sensibili.
+
+\subsubsection*{Classi di equivalenza}
+Sono state identificate le seguenti classi di equivalenza per i parametri di input (estratti dalla richiesta):
+\begin{itemize}
+    \item \textbf{email:}
+    \begin{itemize}
+        \item CE1 (Valida): Email presente nel database.
+        \item CE2 (Non valida): Email non registrata nel sistema.
+    \end{itemize}
+    \item \textbf{password:}
+    \begin{itemize}
+        \item CE1 (Valida): Password corrispondente all'hash salvato.
+        \item CE2 (Non valida): Password errata.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection*{Strategia di Verifica}
+\begin{itemize}
+    \item \textbf{Caso 1 (CE2, -):} Utente sconosciuto $\rightarrow$ Errore generico (Status 401).
+    \item \textbf{Caso 2 (CE1, CE2):} Password errata $\rightarrow$ Errore generico (Status 401).
+    \item \textbf{Caso 3 (CE1, CE1):} Credenziali corrette $\rightarrow$ Successo e restituzione Token JWT (Status 200).
+\end{itemize}
+
+\subsection{Registrazione Utente (\texttt{createUser})}
+Questo metodo gestisce la creazione di nuove identità, con il vincolo fondamentale dell'unicità dell'email.
+
+\subsubsection*{Classi di equivalenza}
+Sono state identificate le seguenti classi di equivalenza per i parametri di input (estratti dalla richiesta):
+\begin{itemize}
+    \item \textbf{email:}
+    \begin{itemize}
+        \item CE1 (Valida): Email univoca (non presente nel DB).
+        \item CE2 (Non valida): Email duplicata (già presente).
+    \end{itemize}
+    \item \textbf{role:}
+    \begin{itemize}
+        \item CE1 (Valida): Ruolo ammesso (ADMIN, USER).
+        \item CE2 (Non valida): Ruolo non valido.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection*{Strategia di Verifica}
+\begin{itemize}
+    \item \textbf{Caso 1 (CE2, -):} Tentativo di registrazione con email duplicata $\rightarrow$ Errore (Status 400).
+    \item \textbf{Caso 2 (CE1, CE1):} Nuova email e ruolo valido $\rightarrow$ Creazione riuscita con hashing della password (Status 201).
+\end{itemize}
+
+\section{Valutazione dell'Usabilità}
+La valutazione dell'usabilità della piattaforma BugBoard è stata strutturata su due livelli di indagine complementari: una revisione esperta (Expert Review) basata su euristiche consolidate e una campagna di test empirici con utenti reali.
+
+Questa strategia duale è stata finalizzata non solo alla rilevazione di eventuali frizioni cognitive o difetti di design, ma anche alla validazione delle scelte progettuali, con l'obiettivo ultimo di massimizzare l'accessibilità e la soddisfazione d'uso complessiva.
+
+\subsection{Expert Review}
+Al fine di individuare difetti di usabilità prima del rilascio, è stata condotta un'ispezione esperta utilizzando una checklist basata sulle euristiche di Nielsen.
+
+\textbf{Metodologia}
+\begin{itemize}
+    \item \textbf{Visibilità dello stato:} Verifica della presenza di feedback immediati (es. "Issue creata con successo").
+    \item \textbf{Corrispondenza col mondo reale:} Uso di terminologia tecnica appropriata per il target di sviluppatori (es. "Bug", "Feature", "Deploy").
+    \item \textbf{Prevenzione errori:} Verifica dei controlli sui form (es. disabilitazione tasto "Crea" se il titolo manca).
+\end{itemize}
+
+\textbf{Risultati principali}
+\begin{itemize}
+    \item \textit{Punti di forza:} La Dark Mode riduce l'affaticamento visivo; la navigazione tramite Bottom Bar è risultata intuitiva.
+    \item \textit{Criticità risolte:} Inizialmente le icone di priorità erano poco distinguibili; sono state sostituite con icone colorate e frecce direzionali prima del test con utenti.
+\end{itemize}
+
+\subsection{Esperimento con Utenti Reali}
+Per valutare l'usabilità sul campo, è stato condotto un esperimento con utenti rappresentativi del target finale.
+
+\textbf{Partecipanti}
+\begin{itemize}
+    \item \textbf{Totale:} 6 soggetti (Età 22-30 anni).
+    \item \textbf{Profilo:} Studenti di informatica e Junior Developer.
+    \item \textbf{Ruoli:} 4 utenti "Developer", 2 utenti "Admin/Project Manager".
+\end{itemize}
+
+\textbf{Procedura}
+Ogni utente ha eseguito uno scenario d'uso composto da 4 task:
+\begin{enumerate}
+    \item Login e accesso alla Dashboard.
+    \item Creazione di una nuova Issue di tipo "Bug" con priorità "Alta".
+    \item Ricerca della issue appena creata tramite i filtri.
+    \item Aggiunta di un commento alla issue.
+\end{enumerate}
+
+\subsubsection*{Metriche Raccolte}
+Durante l'esperimento sono stati misurati i seguenti parametri:
+\begin{itemize}
+    \item \textbf{Tempo medio completamento task:} 35 secondi.
+    \item \textbf{Task completati con successo:} 100\%.
+    \item \textbf{Errori medi per utente:} 0.8 (principalmente nella selezione dei filtri).
+    \item \textbf{Soddisfazione (Scala 1-5):} 4.6.
+\end{itemize}
+
+\subsection{Survey Post-Esperimento}
+Al termine della sessione, ai partecipanti è stato somministrato un questionario per raccogliere impressioni soggettive.
+
+\textbf{Sintesi dei risultati}
+\begin{itemize}
+    \item \textbf{Facilità d'uso:} Il 100\% degli utenti ha dichiarato di aver trovato facilmente le funzioni principali ("Molto facile" o "Facile").
+    \item \textbf{Design:} Il tema scuro è stato particolarmente apprezzato per l'uso prolungato.
+    \item \textbf{Feedback:} Alcuni utenti hanno suggerito di rendere più visibile il pulsante per "pulire" i filtri attivi; suggerimento annotato per sviluppi futuri.
+\end{itemize}
