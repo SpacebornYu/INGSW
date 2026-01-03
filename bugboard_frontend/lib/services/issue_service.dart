@@ -7,6 +7,11 @@ import '../models/issue.dart';
 class IssueService {
   static const String baseUrl = 'http://localhost:3000';
 
+  // --- MODIFICA PER I TEST: Dependency Injection ---
+  final http.Client client;
+
+  IssueService({http.Client? client}) : client = client ?? http.Client();
+
   // GET LISTA (Server-Side Filtering)
   Future<List<Issue>> getIssues({
     String? search,
@@ -29,7 +34,8 @@ class IssueService {
     final url = Uri.parse('$baseUrl/issues').replace(queryParameters: queryParams);
 
     try {
-      final response = await http.get(
+      // Uso 'client.get'
+      final response = await client.get(
         url,
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
       );
@@ -43,14 +49,15 @@ class IssueService {
     }
   }
 
-  //DETTAGLIO
+  // DETTAGLIO
   Future<Issue?> getIssueDetails(int id) async {
     final url = Uri.parse('$baseUrl/issues/$id');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
     try {
-      final response = await http.get(
+      // Uso 'client.get'
+      final response = await client.get(
         url,
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
       );
@@ -70,7 +77,8 @@ class IssueService {
     final token = prefs.getString('token');
 
     try {
-      final response = await http.post(
+      // Uso 'client.post'
+      final response = await client.post(
         url,
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
         body: jsonEncode({'content': content}),
@@ -88,7 +96,8 @@ class IssueService {
     final token = prefs.getString('token');
 
     try {
-      final response = await http.delete(
+      // Uso 'client.delete'
+      final response = await client.delete(
         url,
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
       );
@@ -98,7 +107,7 @@ class IssueService {
     }
   }
 
-  //CREA ISSUE
+  // CREA ISSUE
   Future<bool> createIssue(String title, String description, String type, String priority, List<String> labels, List<XFile> images) async {
     final url = Uri.parse('$baseUrl/issues');
     final prefs = await SharedPreferences.getInstance();
@@ -133,7 +142,10 @@ class IssueService {
     }
 
     try {
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      // MODIFICA IMPORTANTE: Uso 'client.send(request)' invece di 'request.send()'
+      // Questo permette al Mock Client di intercettare anche le richieste Multipart
+      final streamedResponse = await client.send(request).timeout(const Duration(seconds: 30));
+      
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode != 201) {
@@ -146,6 +158,7 @@ class IssueService {
       return false;
     }
   }
+
   // AGGIORNA STATO
   Future<bool> updateStatus(int issueId, String newStatus) async {
     final url = Uri.parse('$baseUrl/issues/$issueId');
@@ -153,7 +166,8 @@ class IssueService {
     final token = prefs.getString('token');
 
     try {
-      final response = await http.patch(
+      // Uso 'client.patch'
+      final response = await client.patch(
         url,
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
         body: jsonEncode({'status': newStatus}),

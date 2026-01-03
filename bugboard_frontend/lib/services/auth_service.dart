@@ -7,11 +7,19 @@ class AuthService {
   // Usare 10.0.2.2 per Android Emulator
   static const String baseUrl = 'http://localhost:3000';
 
+  // --- MODIFICA PER I TEST: Dependency Injection ---
+  final http.Client client;
+
+  // Costruttore: se 'client' non viene passato (uso normale), crea un nuovo http.Client().
+  // Se viene passato (nei test), usa quello (che sarà il Mock).
+  AuthService({http.Client? client}) : client = client ?? http.Client();
+
   // --- LOGIN ---
   Future<bool> login(String email, String password) async {
     final url = Uri.parse('$baseUrl/auth/login');
     try {
-      final response = await http.post(
+      // Uso 'client.post' invece di 'http.post'
+      final response = await client.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
@@ -37,14 +45,15 @@ class AuthService {
     }
   }
 
-  //REGISTRAZIONE NUOVO UTENTE (Solo per gli Admin)
+  // REGISTRAZIONE NUOVO UTENTE (Solo per gli Admin)
   Future<String?> registerUser(String email, String password, String role) async {
     final url = Uri.parse('$baseUrl/users/admin/users');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
     try {
-      final response = await http.post(
+      // Uso 'client.post' invece di 'http.post'
+      final response = await client.post(
         url,
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +80,7 @@ class AuthService {
     }
   }
 
-  //LOGOUT
+  // LOGOUT (Nessuna chiamata HTTP qui, rimane uguale)
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
