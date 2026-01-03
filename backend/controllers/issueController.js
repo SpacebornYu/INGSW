@@ -21,12 +21,19 @@ export async function createIssue(req, res) {
         imageUrl = JSON.stringify([req.file.path]);
     }
 
-    if (!title || !description || !type) {
-      return res.status(400).json({ error: 'Titolo, descrizione e tipo sono obbligatori' });
+    if (!title || !description || !type || !priority) {
+      return res.status(400).json({ error: 'Titolo, descrizione, tipo e priorità sono obbligatori' });
     }
 
-    // Controllo priorità aggiornato
-    if (priority && !['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH', 'URGENT'].includes(priority)) {
+    // Validazione Type
+    const validTypes = ['QUESTION', 'BUG', 'DOCUMENTATION', 'FEATURE'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ error: 'Tipo non valido' });
+    }
+
+    // Controllo priorità aggiornato (Allineato con il DB)
+    const validPriorities = ['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'];
+    if (!validPriorities.includes(priority)) {
       return res.status(400).json({ error: 'Priorità non valida' });
     }
 
@@ -34,7 +41,7 @@ export async function createIssue(req, res) {
       title,
       description,
       type,
-      priority: priority || null,
+      priority,
       status: 'TODO',
       creatorId: req.user.id,
       imageUrl: imageUrl,

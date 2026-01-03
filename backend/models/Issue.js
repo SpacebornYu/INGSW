@@ -21,7 +21,7 @@ const Issue = database.define('Issue', {
   },
   priority: {
     type: DataTypes.ENUM('VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'),
-    allowNull: true,
+    allowNull: false,
   },
   status: {
     type: DataTypes.ENUM('TODO', 'IN_CORSO', 'COMPLETATA'),

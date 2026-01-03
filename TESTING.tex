@@ -28,15 +28,15 @@ Il metodo \texttt{createIssue} è responsabile dell'orchestrazione del processo 
 \subsubsection*{Classi di equivalenza}
 Sono state identificate le seguenti classi di equivalenza per i parametri di input (estratti dalla richiesta):
 \begin{itemize}
-    \item \textbf{title / description / type:}
+    \item \textbf{Campi Obbligatori (title, description, type, priority):}
     \begin{itemize}
-        \item CE1 (Valida): Stringhe non vuote e tipo definito nell'enumerazione.
-        \item CE2 (Non valida): Stringhe vuote o nulle.
+        \item CE1 (Valida): Tutti i campi presenti e non vuoti.
+        \item CE2 (Non valida): Uno o più campi mancanti o vuoti.
     \end{itemize}
-    \item \textbf{priority:}
+    \item \textbf{Validità Domini (type, priority):}
     \begin{itemize}
-        \item CE1 (Valida): Valore appartenente all'insieme ammesso (es. HIGH, MEDIUM, LOW).
-        \item CE2 (Non valida): Valore non riconosciuto dal sistema.
+        \item CE1 (Valida): Valore appartenente all'enumerazione (es. BUG, HIGH).
+        \item CE2 (Non valida): Valore non riconosciuto (es. "PIZZA", "URGENT").
     \end{itemize}
     \item \textbf{user:}
     \begin{itemize}
@@ -48,8 +48,9 @@ Sono state identificate le seguenti classi di equivalenza per i parametri di inp
 \subsubsection*{Strategia di Verifica (N-WECT)}
 Sono stati implementati scenari per coprire le combinazioni significative:
 \begin{itemize}
-    \item \textbf{Caso 1 (CE1, CE1, CE1):} Dati validi, priorità corretta e utente autenticato $\rightarrow$ Creazione riuscita (Status 201).
-    \item \textbf{Caso 2 (CE2, -, -):} Titolo o descrizione mancanti $\rightarrow$ Errore di validazione (Status 400).
+    \item \textbf{Caso 1 (CE1, CE1, CE1):} Tutto valido $\rightarrow$ Creazione riuscita (Status 201).
+    \item \textbf{Caso 2 (CE2, -, -):} Campo obbligatorio mancante $\rightarrow$ Errore (Status 400).
+    \item \textbf{Caso 3 (CE1, CE2, -):} Tipo o priorità non validi $\rightarrow$ Errore (Status 400).
 \end{itemize}
 
 \subsection{Ricerca e Filtraggio (\texttt{getIssues})}
