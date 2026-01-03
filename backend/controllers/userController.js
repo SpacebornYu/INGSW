@@ -29,6 +29,12 @@ export async function createUser(req, res) {
       return res.status(400).json({ error: 'Email e password sono obbligatori' });
     }
 
+    // Validazione formato email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Formato email non valido' });
+    }
+
     if (role && !['ADMIN', 'USER'].includes(role)) {
       return res.status(400).json({ error: 'Ruolo non valido' });
     }

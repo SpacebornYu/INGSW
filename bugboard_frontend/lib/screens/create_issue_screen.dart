@@ -206,9 +206,9 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  _input("Titolo", _titleController),
+                  _input("Titolo", _titleController, maxLength: 100),
                   const SizedBox(height: 16),
-                  _input("Descrizione", _descController, lines: 4),
+                  _input("Descrizione", _descController, lines: 4, maxLength: 2000),
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -305,6 +305,20 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
     );
   }
 
-  Widget _input(String h, TextEditingController c, {int lines=1}) => TextField(controller: c, maxLines: lines, style: const TextStyle(color: Colors.white), onChanged: (_) => setState((){}), decoration: InputDecoration(hintText: h, hintStyle: const TextStyle(color: Colors.grey), filled: true, fillColor: const Color(0xFF1C1C1E), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)));
+  Widget _input(String h, TextEditingController c, {int lines=1, int? maxLength}) => TextField(
+    controller: c, 
+    maxLines: lines, 
+    maxLength: maxLength,
+    style: const TextStyle(color: Colors.white), 
+    onChanged: (_) => setState((){}), 
+    decoration: InputDecoration(
+      hintText: h, 
+      hintStyle: const TextStyle(color: Colors.grey), 
+      filled: true, 
+      fillColor: const Color(0xFF1C1C1E), 
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      counterStyle: const TextStyle(color: Colors.grey), // Stile del contatore
+    )
+  );
   Widget _bigBtn(String l, bool s, VoidCallback t, {bool isDisabled = false}) => GestureDetector(onTap: isDisabled ? null : t, child: Container(height: 50, alignment: Alignment.center, decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(25), border: s ? Border.all(color: Colors.blue) : null), child: Text(l, style: TextStyle(color: isDisabled ? Colors.grey.shade700 : (s ? Colors.blue : Colors.grey), fontWeight: FontWeight.bold))));
 }

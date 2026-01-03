@@ -25,6 +25,14 @@ export async function createIssue(req, res) {
       return res.status(400).json({ error: 'Titolo, descrizione, tipo e priorità sono obbligatori' });
     }
 
+    // Validazione Lunghezza
+    if (title.length > 100) {
+      return res.status(400).json({ error: 'Il titolo non può superare i 100 caratteri' });
+    }
+    if (description.length > 2000) {
+      return res.status(400).json({ error: 'La descrizione non può superare i 2000 caratteri' });
+    }
+
     // Validazione Type
     const validTypes = ['QUESTION', 'BUG', 'DOCUMENTATION', 'FEATURE'];
     if (!validTypes.includes(type)) {
@@ -89,9 +97,16 @@ export async function getIssues(req, res) {
 
     const where = {};
 
-    if (type) where.type = type;
-    if (status) where.status = status;
-    if (priority) where.priority = priority;
+    // Validazione filtri per evitare errori DB su ENUM
+    const validTypes = ['QUESTION', 'BUG', 'DOCUMENTATION', 'FEATURE'];
+    if (type && validTypes.includes(type)) where.type = type;
+
+    const validStatuses = ['TODO', 'IN_CORSO', 'COMPLETATA'];
+    if (status && validStatuses.includes(status)) where.status = status;
+
+    const validPriorities = ['VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'];
+    if (priority && validPriorities.includes(priority)) where.priority = priority;
+
     if (creatorId) where.creatorId = creatorId;
     
     if (search) {

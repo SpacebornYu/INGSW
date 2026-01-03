@@ -39,6 +39,10 @@ export async function createComment(req, res) {
       return res.status(400).json({ error: 'Il contenuto del commento è obbligatorio' });
     }
 
+    if (content.length > 1000) {
+      return res.status(400).json({ error: 'Il commento non può superare i 1000 caratteri' });
+    }
+
     // Verifica che la issue esista
     const issue = await Issue.findByPk(id);
     if (!issue) {
