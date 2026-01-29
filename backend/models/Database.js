@@ -16,19 +16,23 @@ export const database = new Sequelize(
 );
 
 export const connectDatabase = async () => {
-    try {
-        await database.authenticate();  // verifica la connessione al database 
-                                        // se i parametri sono corretti e se il db risponde
-        console.log("Database connected successfully");
-        
-        // importo le relazioni dei modelli dopo la definizione e connessione del database
-        await import('./Relations.js');
-        
-        // sincronizza i modelli con il database
-        await database.sync({ alter: true }); // aggiornamento dei modelli esistenti
-        console.log("Database synchronized");
-    } catch (error) {
-        console.error("Unable to connect to the database:", error);
-        process.exit(1);
+    let retries = 5;
+    while (retries > 0) {
+        try {
+            await database.authenticate();
+            console.log("Database connected successfully");
+            
+            await import('./Relations.js');
+            await database.sync({ alter: true });
+            console.log("Database synchronized");
+            return; // Success
+        } catch (error) {
+            console.log(`Database connection failed, retrying in 5 seconds... (${retries} retries left)`);
+            console.error(error.message);
+            retries -= 1;
+            await new Promise(res => setTimeout(res, 5000));
+        }
     }
+    throw new Error("Could not connect to database after multiple retries");
 };
+
