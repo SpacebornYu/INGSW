@@ -151,7 +151,7 @@ class _AccountScreenState extends State<AccountScreen> {
           color: a ? Colors.blueAccent : Colors.transparent,
           borderRadius: BorderRadius.circular(10)
         ),
-        child: Text(l, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))
+        child: Text(l, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))
       )
     )
   );

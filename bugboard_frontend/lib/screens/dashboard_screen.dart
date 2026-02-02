@@ -145,8 +145,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           side: const BorderSide(color: Colors.grey),
                           onChanged: (val) {
                             setSheetState(() {
-                              if (val == true) tempSelection.add(opt);
-                              else tempSelection.remove(opt);
+                              if (val == true) {
+                                tempSelection.add(opt);
+                              } else {
+                                tempSelection.remove(opt);
+                              }
                             });
                           },
                         );

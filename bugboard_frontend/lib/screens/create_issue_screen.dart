@@ -19,8 +19,8 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
   final _labelController = TextEditingController(); // Controller per l'input
   String? _selectedType;
   String? _selectedPriority;
-  List<XFile> _selectedImages = [];
-  List<String> _tags = []; // LISTA DELLE ETICHETTE
+  final List<XFile> _selectedImages = [];
+  final List<String> _tags = []; // LISTA DELLE ETICHETTE
   bool _isLoading = false;
   final IssueService _issueService = IssueService();
 

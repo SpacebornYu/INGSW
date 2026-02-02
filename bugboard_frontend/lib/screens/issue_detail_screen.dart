@@ -50,7 +50,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       List<dynamic> decoded = jsonDecode(jsonString) as List<dynamic>;
       return decoded.map((e) => e.toString()).toList();
     } catch (e) {
-      return [jsonString!];
+      return [jsonString];
     }
   }
 
@@ -88,8 +88,9 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         if (isSelected) return;
         setState(() => _isLoading = true);
         bool success = await _issueService.updateStatus(widget.issueId, backendValue);
-        if (success) _loadData();
-        else {
+        if (success) {
+          _loadData();
+        } else {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Errore aggiornamento stato")));
         }

@@ -114,8 +114,9 @@ class IssueService {
     final token = prefs.getString('token');
 
     String formattedPriority = priority;
-    if (priority == 'Very High') formattedPriority = 'VERY HIGH';
-    else if (priority == 'High') formattedPriority = 'HIGH';
+    if (priority == 'Very High') {
+      formattedPriority = 'VERY HIGH';
+    } else if (priority == 'High') formattedPriority = 'HIGH';
     else if (priority == 'Medium') formattedPriority = 'MEDIUM';
     else if (priority == 'Low') formattedPriority = 'LOW';
     else if (priority == 'Very Low') formattedPriority = 'VERY LOW';
