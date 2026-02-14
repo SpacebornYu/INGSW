@@ -74,13 +74,20 @@ class CreateIssueScreenState extends State<CreateIssueScreen> {
 
   // LOGICA AGGIUNTA TAG
   void _addTag(String value) {
-    if (value.trim().isEmpty) return;
+    String trimmed = value.trim();
+    if (trimmed.isEmpty) return;
+    
+    if (_tags.contains(trimmed)) {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tag già presente!")));
+       return;
+    }
+
     if (_tags.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Massimo 5 etichette!")));
       return;
     }
     setState(() {
-      _tags.add(value.trim());
+      _tags.add(trimmed);
       _labelController.clear(); // Pulisce l'input per scriverne un'altra
     });
   }

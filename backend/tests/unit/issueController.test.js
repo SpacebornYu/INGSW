@@ -12,6 +12,15 @@ const mockTag = {
 };
 const mockComment = {};
 
+const mockTransaction = {
+  commit: jest.fn(),
+  rollback: jest.fn(),
+};
+const mockDatabase = {
+  transaction: jest.fn().mockResolvedValue(mockTransaction),
+};
+jest.unstable_mockModule('../../models/Database.js', () => ({ database: mockDatabase }));
+
 jest.unstable_mockModule('../../models/Issue.js', () => ({ default: mockIssue }));
 jest.unstable_mockModule('../../models/User.js', () => ({ default: mockUser }));
 jest.unstable_mockModule('../../models/Tag.js', () => ({ default: mockTag }));
@@ -66,9 +75,27 @@ describe('Issue Controller', () => {
         type: 'BUG',
         priority: 'HIGH',
         creatorId: 1
-      }));
+      }), expect.anything());
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(mockCreatedIssue);
+    });
+
+    it('should fail if duplicate tags are provided', async () => {
+      req.body = { 
+        title: 'Title with tags', 
+        description: 'Desc', 
+        type: 'BUG', 
+        priority: 'HIGH',
+        tags: ['bug', 'bug', 'urgent'] 
+      };
+      
+      const mockCreatedIssue = { id: 1, addTags: jest.fn() };
+      mockIssue.create.mockResolvedValue(mockCreatedIssue);
+
+      await createIssue(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Non sono ammessi tag duplicati' });
     });
   });
 
