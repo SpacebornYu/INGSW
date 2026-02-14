@@ -49,7 +49,7 @@ describe('Issue Controller', () => {
       await createIssue(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Titolo, descrizione e tipo sono obbligatori' });
+      expect(res.json).toHaveBeenCalledWith({ error: 'Titolo, descrizione, tipo e priorità sono obbligatori' });
     });
 
     it('should create an issue successfully', async () => {
