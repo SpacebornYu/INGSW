@@ -1,154 +1,154 @@
-# BugBoard - Issue Tracking System
+# BugBoard - Sistema di Tracciamento Segnalazioni
 
-BugBoard is a complete full-stack application for bug and issue tracking, developed as a software engineering project. It consists of a RESTful backend in Node.js and a cross-platform frontend in Flutter.
+BugBoard è un'applicazione full-stack completa per la gestione e il tracciamento di bug e segnalazioni, sviluppata come progetto di ingegneria del software. Consiste in un backend RESTful in Node.js e un frontend multipiattaforma in Flutter.
 
-## 🏗 Architecture
+## 🏗 Architettura
 
-The project is divided into two main components:
+Il progetto è diviso in due componenti principali:
 
-*   **Backend:** Node.js with Express and Sequelize (ORM). It manages APIs, authentication, and the connection with the PostgreSQL database.
-*   **Frontend:** Flutter application (Android/iOS/Web/Linux) for user interaction.
+*   **Backend:** Node.js con Express e Sequelize (ORM). Gestisce le API, l'autenticazione e la connessione con il database PostgreSQL.
+*   **Frontend:** Applicazione Flutter (Android/iOS/Web/Linux) per l'interazione con l'utente.
 *   **Database:** PostgreSQL.
-*   **Storage:** Cloudinary for managing file uploads (images/attachments).
+*   **Storage:** Cloudinary per la gestione dei caricamenti di file (immagini/allegati).
 
-## 🚀 Tech Stack
+## 🚀 Stack Tecnologico
 
 ### Backend
 *   **Runtime:** Node.js
 *   **Framework:** Express.js
 *   **Database:** PostgreSQL
 *   **ORM:** Sequelize
-*   **Authentication:** JWT (JSON Web Tokens)
-*   **File Storage:** Cloudinary
+*   **Autenticazione:** JWT (JSON Web Tokens)
+*   **Archiviazione File:** Cloudinary
 *   **Testing:** Jest
 
 ### Frontend
 *   **Framework:** Flutter
-*   **Http Client:** http
-*   **State Management:** (Standard/StatefulWidgets)
+*   **Client Http:** http
+*   **Gestione Stato:** (Standard/StatefulWidgets)
 
 ### DevOps
-*   Docker & Docker Compose for containerization and orchestration.
+*   Docker & Docker Compose per la containerizzazione e l'orchestrazione.
 
-## 🛠 Prerequisites
+## 🛠 Prerequisiti
 
-*   **Docker & Docker Compose** (Recommended for running the complete stack)
-*   *Alternatively for local development:*
+*   **Docker & Docker Compose** (Consigliato per eseguire l'intero stack)
+*   *Alternativamente per lo sviluppo locale:*
     *   Node.js (v18+)
     *   PostgreSQL
     *   Flutter SDK (v3.0+)
 
-## 📦 Installation & Running
+## 📦 Installazione e Avvio
 
-### Option 1: Using Docker Compose (Recommended)
+### Opzione 1: Utilizzando Docker Compose (Consigliato)
 
-1.  **Clone the repository:**
+1.  **Clona la repository:**
     ```bash
-    git clone <repo_url>
+    git clone <url_repo>
     cd INGSW
     ```
 
-2.  **Environment Configuration:**
-    Ensure you have a `.env` file in the `backend/` folder with the necessary configurations (DB, Cloudinary, JWT).
-    *See the [Environment Variables](#-environment-variables) section below.*
+2.  **Configurazione Ambiente:**
+    Assicurati di avere un file `.env` nella cartella `backend/` con le configurazioni necessarie (DB, Cloudinary, JWT).
+    *Vedi la sezione [Variabili d'Ambiente](#-variabili-dambiente) qui sotto.*
 
-3.  **Start the application:**
+3.  **Avvia l'applicazione:**
     ```bash
     docker-compose up --build
     ```
-    *   The **Backend** will be available at: `http://localhost:3000`
-    *   The **Database** runs on port `5432`.
-    *   The **Frontend** (Web version) will be served (check docker logs for the exposed port if configured with Nginx, otherwise run Flutter locally).
+    *   Il **Backend** sarà disponibile su: `http://localhost:3000`
+    *   Il **Database** è in esecuzione sulla porta `5432`.
+    *   Il **Frontend** (versione Web) verrà servito (controlla i log di docker per la porta esposta se configurato con Nginx, altrimenti esegui Flutter localmente).
 
-### Option 2: Manual Setup
+### Opzione 2: Configurazione Manuale
 
 #### Backend
-1.  Navigate to the backend folder:
+1.  Naviga nella cartella backend:
     ```bash
     cd backend
     ```
-2.  Install dependencies:
+2.  Installa le dipendenze:
     ```bash
     npm install
     ```
-3.  Configure the `.env` file.
-4.  Start the server:
+3.  Configura il file `.env`.
+4.  Avvia il server:
     ```bash
     npm start
-    # Or for development with hot-reload:
+    # Oppure per lo sviluppo con hot-reload:
     npm run dev
     ```
 
 #### Frontend
-1.  Navigate to the frontend folder:
+1.  Naviga nella cartella frontend:
     ```bash
     cd bugboard_frontend
     ```
-2.  Install dependencies:
+2.  Installa le dipendenze:
     ```bash
     flutter pub get
     ```
-3.  Run the app:
+3.  Esegui l'app:
     ```bash
     flutter run
     ```
 
-## 🔑 Environment Variables
+## 🔑 Variabili d'Ambiente
 
-Create a `.env` file in the `backend/` directory with the following variables:
+Crea un file `.env` nella directory `backend/` con le seguenti variabili:
 
 ```env
-# Database Configuration
+# Configurazione Database
 DB_HOST=localhost
 DB_USER=postgres
-DB_PASSWORD=your_password
+DB_PASSWORD=tua_password
 DB_NAME=IngSW
 DB_PORT=5432
 DB_DIALECT=postgres
 
-# Security
-JWT_SECRET=your_super_secret_key
+# Sicurezza
+JWT_SECRET=tua_chiave_segreta
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=admin123
 
-# Cloudinary (Image Uploads)
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+# Cloudinary (Caricamento Immagini)
+CLOUDINARY_CLOUD_NAME=tuo_cloud_name
+CLOUDINARY_API_KEY=tua_api_key
+CLOUDINARY_API_SECRET=tua_api_secret
 ```
 
-## ✨ Features
+## ✨ Funzionalità
 
-*   **User Authentication:** Registration and Login (JWT).
-*   **Role Management:** Standard users and Administrators.
-*   **Issue Management:** Create, read, update, and delete reporting/bugs.
-*   **Filtering:** Filter issues by tags or status.
-*   **Comments:** Add comments to issues.
-*   **Attachments:** Upload images using Cloudinary.
+*   **Autenticazione Utente:** Registrazione e Login (JWT).
+*   **Gestione Ruoli:** Utenti standard e Amministratori.
+*   **Gestione Segnalazioni:** Creazione, lettura, aggiornamento e cancellazione di segnalazioni/bug.
+*   **Filtri:** Filtra le segnalazioni per tag o stato.
+*   **Commenti:** Aggiungi commenti alle segnalazioni.
+*   **Allegati:** Carica immagini utilizzando Cloudinary.
 
-## 📂 Project Structure
+## 📂 Struttura del Progetto
 
 ```
 INGSW/
-├── backend/                # Node.js/Express Server
-│   ├── config/             # DB and Cloudinary Config
-│   ├── controllers/        # Request logic (Auth, Issue, Comment)
-│   ├── models/             # Sequelize Models
-│   ├── routes/             # API Routes
+├── backend/                # Server Node.js/Express
+│   ├── config/             # Configurazione DB e Cloudinary
+│   ├── controllers/        # Logica delle Richieste (Auth, Issue, Comment)
+│   ├── models/             # Modelli Sequelize
+│   ├── routes/             # Rotte API
 │   └── ...
-├── bugboard_frontend/      # Flutter App
+├── bugboard_frontend/      # App Flutter
 │   ├── lib/
 │   │   ├── models/
 │   │   ├── screens/
 │   │   └── services/
 │   └── ...
-├── docs/                   # Documentation and Diagrams
-└── docker-compose.yml      # Docker Orchestration
+├── docs/                   # Documentazione e Diagrammi
+└── docker-compose.yml      # Orchestrazione Docker
 ```
 
 ## 🧪 Testing
 
-*   **Backend Tests:**
+*   **Test Backend:**
     ```bash
     cd backend
     npm test
