@@ -1,21 +1,21 @@
 version: '3.8'
 
 services:
-  # Servizio Database (PostgreSQL)
-  postgres:
-    image: postgres:15-alpine
-    container_name: bugboard_postgres
-    restart: always
-    environment:
-      POSTGRES_USER: ${DB_USER:-admin}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-      POSTGRES_DB: ${DB_NAME:-bugboard}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - bugboard_network
+  # Servizio Database (PostgreSQL) - COMMENTATO PER USARE DB LOCALE
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: bugboard_postgres
+  #   restart: always
+  #   environment:
+  #     POSTGRES_USER: ${DB_USER:-admin}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+  #     POSTGRES_DB: ${DB_NAME:-bugboard}
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - bugboard_network
 
   # Servizio Backend (Node.js/Express)
   backend:
@@ -28,20 +28,19 @@ services:
       - ./backend/.env
     environment:
       PORT: 3000
-      DB_HOST: postgres
+      # PUNTA AL PC LOCALE ("HOST") INVECE CHE AL CONTAINER "postgres"
+      DB_HOST: host.docker.internal 
       DB_PORT: 5432
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:-password}
-      DB_NAME: ${DB_NAME:-bugboard}
+      # Usiamo direttamente le credenziali del tuo .env locale
+      DB_USER: postgres
+      DB_PASSWORD: francy09
+      DB_NAME: IngSW
       DB_DIALECT: postgres
-      # Le variabili Cloudinary e JWT verranno prese dal file .env se presente o dall'ambiente
-      # Se vuoi passare variabili specifiche, scommenta sotto o usa un file .env nella root
-      # JWT_SECRET: ${JWT_SECRET}
-      # CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
-      # CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
-      # CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
-    depends_on:
-      - postgres
+    # Aggiunta fondamentale per Linux per risolvere 'host.docker.internal'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # depends_on:
+    #   - postgres
     networks:
       - bugboard_network
 

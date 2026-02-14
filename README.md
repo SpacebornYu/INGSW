@@ -57,8 +57,16 @@ Il progetto è diviso in due componenti principali:
     docker-compose up --build
     ```
     *   Il **Backend** sarà disponibile su: `http://localhost:3000`
-    *   Il **Database** è in esecuzione sulla porta `5432`.
-    *   Il **Frontend** (versione Web) verrà servito (controlla i log di docker per la porta esposta se configurato con Nginx, altrimenti esegui Flutter localmente).
+    *   Il **Database** utilizzato è quello installato sulla macchina host (default port 5432).
+    *   Il **Frontend** (versione Web) sarà disponibile su: `http://localhost:8080`.
+
+### Note per utenti Linux
+Per permettere a Docker di connettersi al database locale sulla macchina host, è necessario assicurarsi che nel `docker-compose.yml` sia presente la configurazione:
+```yaml
+extra_hosts:
+  - "host.docker.internal:host-gateway"
+```
+Inoltre, potrebbe essere necessario configurare PostgreSQL per accettare connessioni esterne (modificando `postgresql.conf` e `pg_hba.conf`).
 
 ### Opzione 2: Configurazione Manuale
 
